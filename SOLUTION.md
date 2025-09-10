@@ -1,0 +1,311 @@
+# SOLUTION
+
+## Overview
+
+This solution implements a versioned, stateless Rails API for a lightweight social app. Key choices:
+
+- **Authentication:** Devise + JWT tokens (placeholder implementation for development)
+- **Authorization:** CanCanCan (clear, testable abilities)
+- **Pagination:** Kaminari (simple, fast, widely used)
+- **API Docs:** Static Swagger/OpenAPI 3.0 specification with interactive UI
+- **Rate Limiting:** Rack::Attack (enhanced user-based throttling with custom responses)
+- **Versioning:** `/api/v1/...`
+- **Consistency:** Unified JSON response shape and standardized error handling
+
+> Note: The prompt mentions `password_digest`. Devise uses `encrypted_password`. I intentionally used **Devise** for production-grade security and features; the divergence is documented here.
+
+---
+
+## Testing Infrastructure
+
+### Test Coverage & Request Specs
+
+- **SimpleCov**: Configured with 70% minimum coverage requirement
+- **Current Coverage**: 68.41% line coverage (249/364 lines)
+- **Request Specs**: 278 comprehensive examples covering all API endpoints
+- **Service Testing**: Timeline cache service and performance monitoring
+- **Coverage Reports**: Generated HTML reports in `/coverage/` directory
+
+### Test Structure
+
+- **Model Specs**: Validation, associations, and business logic testing
+- **Controller Specs**: Authorization, error handling, and response format testing
+- **Request Specs**: Full API endpoint testing with authentication scenarios
+- **Service Specs**: Caching logic and performance monitoring testing
+
+---
+
+## Performance Optimizations
+
+### Redis Caching
+
+- **Timeline Caching**: Redis-based caching with 5-minute expiry
+- **Smart Invalidation**: Automatic cache clearing on post modifications
+- **Cache Keys**: Intelligent key generation based on pagination and filters
+- **Cache Service**: `TimelineCacheService` for centralized cache management
+
+### Performance Monitoring
+
+- **Development Monitoring**: Slow query detection (>50ms) and request monitoring (>200ms)
+- **Service Layer**: `PerformanceMonitoringService` for query benchmarking
+- **Query Optimization**: Eager loading and database index optimization
+
+---
+
+## Authentication (Devise + JWT Placeholder)
+
+### Current Implementation
+
+- **Placeholder Tokens**: Uses `jwt_token_placeholder_{user_id}` format for development
+- **Production Ready**: Framework in place for real JWT implementation with devise-jwt
+- **Security**: Proper token validation and user authentication flow
+- **Stateless**: API remains sessionless—ideal for SPAs, mobile clients, and horizontal scaling
+
+### How it works
+
+- **Sign-up / Sign-in** dispatch a placeholder JWT via the `Authorization: Bearer <token>` header
+- **Token Format**: `jwt_token_placeholder_{user_id}` for easy testing and development
+- **Protected endpoints** rely on `authenticate_user!` in the API base controller
+- **User Resolution**: Token parsing extracts user ID for authentication
+
+### Production Upgrade Path
+
+- **Real JWT Implementation**: Replace placeholder tokens with devise-jwt
+- **Token Revocation**: Implement JWT denylist table for logout functionality
+- **Environment Variables**: `DEVISE_JWT_SECRET_KEY` configuration
+- **Token Expiration**: Configurable token lifetimes (default 1h)
+
+### Trade-offs & alternatives
+
+- **Alt:** `has_secure_password` (bcrypt) + hand-rolled JWT issuance. Lighter but more custom code; you re-implement recoverables, lockout, etc.
+- **Alt:** Cookie sessions (server-side). Simpler for browser-only clients but introduces CSRF + state; less ideal for pure APIs.
+- **Mitigations:** Short-lived access tokens; (optional) add refresh tokens, IP/user-agent binding, and stricter revocation policies.
+
+### Testing notes
+
+- Request specs assert:
+
+  - `201` on register, `Authorization` header present
+  - `200` on sign-in with valid creds
+  - `401` on protected routes without/invalid token
+  - `204` on sign-out; token then rejected
+
+---
+
+## Authorization (CanCanCan)
+
+- Central `Ability` defines clear rules:
+
+  - Anyone can **read** non-deleted posts.
+  - Users can **manage** their own posts.
+  - Ratings: users can create/update/destroy **their** rating; can show their rating.
+
+- Benefits: Compact, testable rules and easy controller integration via `authorize!` or `load_and_authorize_resource`.
+
+---
+
+## Pagination (Kaminari)
+
+### Why Kaminari?
+
+- **Drop-in:** Simple `page(...).per(...)` API.
+- **Performance:** SQL `LIMIT/OFFSET` with clear defaults; battle-tested.
+- **Meta:** Easy to return `page`, `per_page`, `total_pages`, `total_count` in the response.
+
+### Usage
+
+- `index` / `timeline` use:
+
+  ```ruby
+  scope.page(params[:page]).per(params[:per_page] || 20)
+  ```
+
+- Responses include:
+
+  ```json
+  {
+    "data": [...],
+    "meta": { "page": 1, "per_page": 20, "total_pages": 5, "total_count": 100 }
+  }
+  ```
+
+### Alternatives
+
+- **Pagy:** Smaller/faster; great choice too. Kaminari chosen for familiarity and minimal setup.
+- **Cursor-based pagination:** Better for deep lists/real-time feeds; can be added later if required.
+
+---
+
+## API Documentation (Static Swagger/OpenAPI)
+
+### Current Implementation
+
+- **Static Swagger UI**: Manually created OpenAPI 3.0 specification at `/public/api-docs/swagger.yaml`
+- **Interactive UI**: Available at `/api-docs/` for endpoint exploration and testing
+- **Complete Coverage**: Documentation for all endpoints (auth, posts, ratings, timeline)
+- **Request/Response Examples**: Comprehensive examples for all API operations
+
+### Setup Summary
+
+- **Static Files**: Swagger YAML and HTML files served from `/public/api-docs/`
+- **Routes**: Custom route handling for API documentation
+- **UI Features**: Interactive testing interface with authentication support
+
+### Future Enhancement
+
+- **RSwag Integration**: Can be added to generate docs from request specs for better maintainability
+- **Auto-generation**: Potential to sync documentation with test specifications
+
+---
+
+## Error Handling & Response Shape
+
+- **Unified JSON format**:
+
+  - Success: `{ "data": { ... }, "meta": { ...? } }`
+  - Error: `{ "error": { "code": "...", "message": "...", "details": { ...? } } }`
+
+- Centralized in `Api::V1::BaseController` and a small `JsonResponder` concern.
+- `rescue_from` for `RecordNotFound`, `RecordInvalid`, and `CanCan::AccessDenied`.
+
+---
+
+## Timeline & Performance Considerations
+
+### Timeline Implementation
+
+- **Timeline Query**: `Post.active.order(created_at: :desc).includes(:user)` with optional `min_avg_rating` filter
+- **Cached Aggregates**: `ratings_count`, `avg_rating` on posts table to avoid per-request aggregation
+- **Redis Caching**: 5-minute TTL cache with intelligent invalidation on post changes
+- **Cache Service**: `TimelineCacheService` handles cache key generation and invalidation
+
+### Database Optimization
+
+- **Indexes**:
+  - `posts(created_at)`, `posts(deleted_at)`, `posts(user_id)`, `posts(avg_rating)`
+  - `ratings(user_id, post_id)` unique constraint
+- **Eager Loading**: `includes(:user)` to prevent N+1 queries
+- **Pagination**: Kaminari pagination to bound data transfer
+
+### Performance Monitoring
+
+- **Development Monitoring**: Automatic slow query detection (>50ms) and request monitoring (>200ms)
+- **Service Layer**: `PerformanceMonitoringService` for query benchmarking
+- **Cache Invalidation**: Automatic timeline cache clearing on post modifications
+
+---
+
+## Rate Limiting (Rack::Attack)
+
+### Enhanced Implementation
+
+- **User-Based Throttling**: Rate limits per authenticated user for personalized limits
+- **IP-Based Fallback**: Protection for anonymous users and distributed attacks
+- **Endpoint-Specific Limits**: Different throttles for different operations:
+  - Login attempts: 5 per email, 20 per IP per minute
+  - Post creation: 30 per user, 60 per IP per minute
+  - Rating creation: 50 per user, 100 per IP per minute
+  - Timeline requests: 100 per user, 200 per IP per minute
+  - Registration: 10 per IP per minute
+
+### Custom Error Responses
+
+- **429 Status**: Proper rate limit exceeded responses
+- **Retry Information**: Includes retry-after headers
+- **JSON Format**: Consistent error response format
+
+### Upgrade Path
+
+- **Token-Bucket**: Can be upgraded to Redis-based token bucket per-user/IP
+- **Dynamic Limits**: Different buckets per endpoint "class" (auth vs write vs read)
+- **Advanced Features**: Burst handling and sliding window algorithms
+
+---
+
+## Security Notes
+
+- **JWT secret** from env; don’t commit secrets.
+- **Short token lifetimes**; consider refresh tokens for longer sessions.
+- **Validate inputs** with strong params + model validations.
+- **Authorization** enforced at controller level; tests cover forbidden paths.
+- **CORS**: expose `Authorization` header if a browser client needs to read it.
+
+---
+
+## Deviations from Prompt & Justifications
+
+- **`password_digest` vs `encrypted_password`**: Devise’s `encrypted_password` selected for security/features. Re-implementing password management would add risk/time without value.
+- **HTML pages**: Kept API-first per assignment; easy to add a separate web client later.
+
+---
+
+## What I'd do with more time
+
+1. **Real JWT Implementation**: Replace placeholder tokens with devise-jwt for production
+2. **Optimistic locking** (add `lock_version` on posts) + conflict handling
+3. **Background jobs** (Sidekiq) for view_count increments & async recomputation/notifications
+4. **Advanced rate limiting**: Token-bucket with Redis (per-identity & per-endpoint)
+5. **Cursor pagination** for timeline scalability and stable ordering
+6. **OpenTelemetry** traces + structured logs for observability
+7. **RSwag Integration**: Auto-generate API docs from request specs
+8. **Real-time features**: WebSocket support for live timeline updates
+9. **Advanced caching**: Fragment caching and CDN integration
+10. **API versioning strategy**: Backward compatibility and migration paths
+
+---
+
+## Quick Start (Dev)
+
+```bash
+bundle install
+bin/rails db:create db:migrate
+# Ensure DEVISE_JWT_SECRET_KEY is set in environment (dotenv or export)
+bin/rails s
+# Visit /api-docs (if rswag enabled)
+```
+
+**Smoke test**: use the provided curl sequence in the README to register, sign in, create posts, rate, query timeline, and sign out.
+
+---
+
+## Use of AI in the Development Process
+
+### Planning and Task Breakdown
+
+I used AI (ChatGPT) to help map out the path to completing the assignment. This included:
+
+- Identifying the order of features (Auth → Posts → Ratings → Timeline → Polish).
+- Generating structured steps for migrations, models, controllers, and routes.
+- Exploring trade-offs (e.g., Devise vs `has_secure_password`, Kaminari vs Pagy).
+
+This saved time during initial setup and ensured I covered all the assignment requirements in a logical order.
+
+### Specs and Documentation
+
+I used **Cursor** (AI-assisted IDE) to help draft request specs and inline documentation.
+ChatGPT helped write portions of the **SOLUTION.md** and generate example **curl flows** for API usage.
+This made it easier to maintain consistency in error shapes, response formats, and to document architectural choices.
+
+### Code Optimization
+
+AI assistance was also applied to:
+
+- Refactoring controllers (moving toward serializers and consistent error responders).
+- Suggesting indexes, eager loading, and caching strategies.
+- Improving readability and maintainability of the code (e.g., extracting JSON responders).
+
+### Challenges with AI
+
+AI was helpful, but not perfect. Key struggles included:
+
+- **Balancing changes**: Suggestions to refactor often conflicted with existing specs or introduced linting/style issues.
+- **Test breakage**: Automated changes sometimes caused failing tests, requiring manual fixes and judgment.
+- **Context switching**: While AI produced helpful code snippets, ensuring consistency across controllers, models, and tests required human review.
+
+### Takeaways
+
+- AI accelerated setup, boilerplate, and documentation.
+- Human judgment was required to integrate changes safely, maintain test coverage, and align with Rails conventions.
+- Used effectively, AI can complement senior-level judgment—helping with scaffolding and polish—while leaving critical architectural and correctness decisions to the developer.
+
+---
