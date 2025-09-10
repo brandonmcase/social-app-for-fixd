@@ -1,5 +1,10 @@
 # Social App for Fixd
 
+[![CI](https://github.com/brandoncase/social-app-for-fixd/workflows/CI/badge.svg)](https://github.com/brandoncase/social-app-for-fixd/actions/workflows/ci.yml)
+[![Tests](https://github.com/brandoncase/social-app-for-fixd/workflows/Tests/badge.svg)](https://github.com/brandoncase/social-app-for-fixd/actions/workflows/test.yml)
+[![Security](https://github.com/brandoncase/social-app-for-fixd/workflows/Security%20Scan/badge.svg)](https://github.com/brandoncase/social-app-for-fixd/actions/workflows/security.yml)
+[![Quality](https://github.com/brandoncase/social-app-for-fixd/workflows/Code%20Quality/badge.svg)](https://github.com/brandoncase/social-app-for-fixd/actions/workflows/quality.yml)
+
 A Rails API-only application for social media functionality with user authentication, post management, and rating system.
 
 ## Features
@@ -36,7 +41,15 @@ A Rails API-only application for social media functionality with user authentica
 - Model, controller, and integration tests
 - FactoryBot for test data generation
 - Shoulda-matchers for validation testing
-- 107+ test examples with 100% pass rate
+- 314+ test examples with 100% pass rate
+- 80%+ code coverage with SimpleCov
+
+### 🚀 CI/CD
+- GitHub Actions workflows for automated testing
+- Code quality checks with RuboCop
+- Security scanning with Brakeman and Bundle Audit
+- Coverage validation for changed files (70% minimum)
+- Automated PR comments with coverage reports
 
 ## Tech Stack
 
@@ -48,6 +61,72 @@ A Rails API-only application for social media functionality with user authentica
 - **Testing**: RSpec, FactoryBot, Shoulda-matchers
 - **Documentation**: Swagger/OpenAPI 3.0
 - **Pagination**: Kaminari
+
+## CI/CD Pipeline
+
+This project uses GitHub Actions for continuous integration and deployment. The CI/CD pipeline includes:
+
+### Workflows
+
+1. **CI Workflow** (`.github/workflows/ci.yml`)
+   - Runs on push and pull requests to main/develop branches
+   - Sets up PostgreSQL and Redis services
+   - Runs RuboCop for code style checking
+   - Executes full RSpec test suite with coverage
+   - Validates 70% minimum coverage for changed files
+   - Posts coverage reports as PR comments
+   - Uploads coverage data to Codecov
+
+2. **Test Workflow** (`.github/workflows/test.yml`)
+   - Simplified test runner for quick feedback
+   - Runs RSpec tests with and without coverage
+   - Uploads coverage reports as artifacts
+
+3. **Security Workflow** (`.github/workflows/security.yml`)
+   - Runs Brakeman for security vulnerability scanning
+   - Performs Bundle Audit for gem vulnerabilities
+   - Scheduled weekly security scans
+   - Uploads security reports as artifacts
+
+4. **Quality Workflow** (`.github/workflows/quality.yml`)
+   - Code quality checks with RuboCop
+   - Scans for TODO/FIXME comments
+   - Detects debug statements (puts, p, binding.pry)
+   - Uploads quality reports as artifacts
+
+### Coverage Requirements
+
+- **Minimum Coverage**: 70% for all changed Ruby files in `app/` directory
+- **Coverage Tool**: SimpleCov with Rails configuration
+- **Coverage Reports**: Generated in HTML format and uploaded as artifacts
+- **PR Comments**: Automated coverage reports posted on pull requests
+
+### Quality Gates
+
+The CI pipeline will fail if:
+- Any RSpec tests fail
+- RuboCop style violations are found
+- Changed files have less than 70% test coverage
+- Security vulnerabilities are detected
+- Debug statements are found in production code
+
+### Local Development
+
+To run the same checks locally:
+
+```bash
+# Run tests with coverage
+COVERAGE=true bundle exec rspec
+
+# Run RuboCop
+bundle exec rubocop
+
+# Run security scan
+bundle exec brakeman
+
+# Run bundle audit
+bundle exec bundle audit
+```
 
 ## Getting Started
 

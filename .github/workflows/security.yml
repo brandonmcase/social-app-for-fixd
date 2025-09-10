@@ -1,0 +1,46 @@
+name: Security Scan
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    - cron: '0 2 * * 1' # Weekly on Monday at 2 AM
+
+jobs:
+  security:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Ruby
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: 3.4.4
+        bundler-cache: true
+
+    - name: Run Brakeman security scan
+      run: |
+        gem install brakeman
+        brakeman --no-pager --format json --output brakeman-report.json || true
+        brakeman --no-pager
+
+    - name: Upload Brakeman results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: brakeman-report
+        path: brakeman-report.json
+
+    - name: Run Bundle Audit
+      run: |
+        gem install bundler-audit
+        bundle audit --update
+
+    - name: Run Yarn Audit (if package.json exists)
+      if: exists('package.json')
+      run: |
+        npm install -g yarn
+        yarn audit --level moderate || true

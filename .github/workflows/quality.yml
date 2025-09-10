@@ -1,0 +1,59 @@
+name: Code Quality
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Ruby
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: 3.4.4
+        bundler-cache: true
+
+    - name: Run RuboCop
+      run: |
+        bundle exec rubocop --format json --out rubocop-report.json
+        bundle exec rubocop
+
+    - name: Upload RuboCop results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: rubocop-report
+        path: rubocop-report.json
+
+    - name: Check for TODO/FIXME comments
+      run: |
+        echo "Checking for TODO/FIXME comments..."
+        TODO_COUNT=$(grep -r "TODO\|FIXME" app/ lib/ spec/ --include="*.rb" | wc -l)
+        if [ $TODO_COUNT -gt 0 ]; then
+          echo "Found $TODO_COUNT TODO/FIXME comments:"
+          grep -r "TODO\|FIXME" app/ lib/ spec/ --include="*.rb"
+          echo ""
+          echo "Consider addressing these before merging."
+        else
+          echo "✅ No TODO/FIXME comments found"
+        fi
+
+    - name: Check for debug statements
+      run: |
+        echo "Checking for debug statements..."
+        DEBUG_COUNT=$(grep -r "puts\|p\|binding.pry\|debugger" app/ lib/ --include="*.rb" | wc -l)
+        if [ $DEBUG_COUNT -gt 0 ]; then
+          echo "Found $DEBUG_COUNT debug statements:"
+          grep -r "puts\|p\|binding.pry\|debugger" app/ lib/ --include="*.rb"
+          echo ""
+          echo "❌ Please remove debug statements before merging."
+          exit 1
+        else
+          echo "✅ No debug statements found"
+        fi
