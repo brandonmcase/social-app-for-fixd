@@ -15,12 +15,15 @@ module Api
 
       # POST /api/v1/posts/:post_id/rating
       def create
-        @rating = @post.ratings.build(rating_params.merge(user: current_user))
+        ActiveRecord::Base.transaction do
+          @rating = @post.ratings.build(rating_params.merge(user: current_user))
 
-        if @rating.save
-          render json: @rating, status: :created
-        else
-          render json: { error: @rating.errors.full_messages }, status: :unprocessable_content
+          if @rating.save
+            render json: @rating, status: :created
+          else
+            render json: { error: @rating.errors.full_messages }, status: :unprocessable_content
+            raise ActiveRecord::Rollback
+          end
         end
       rescue ActionController::ParameterMissing
         render json: { error: [ "Rating parameter is required" ] }, status: :unprocessable_content
@@ -30,10 +33,15 @@ module Api
       def update
         if @rating.nil?
           render json: { error: { code: "not_found", message: "Not found" } }, status: :not_found
-        elsif @rating.update(rating_params)
-          render json: @rating
         else
-          render json: { error: @rating.errors.full_messages }, status: :unprocessable_content
+          ActiveRecord::Base.transaction do
+            if @rating.update(rating_params)
+              render json: @rating
+            else
+              render json: { error: @rating.errors.full_messages }, status: :unprocessable_content
+              raise ActiveRecord::Rollback
+            end
+          end
         end
       end
 
@@ -42,8 +50,10 @@ module Api
         if @rating.nil?
           render json: { error: { code: "not_found", message: "Not found" } }, status: :not_found
         else
-          @rating.destroy
-          head :no_content
+          ActiveRecord::Base.transaction do
+            @rating.destroy
+            head :no_content
+          end
         end
       end
 
