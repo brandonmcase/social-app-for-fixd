@@ -75,6 +75,24 @@ RSpec.describe Rating, type: :model do
           rating.destroy
         end
       end
+
+      context 'error handling' do
+        let!(:rating) { create(:rating, user: user, post: post, rating: 4) }
+
+        it 'handles RecordNotFound errors gracefully' do
+          allow(post).to receive(:with_lock).and_raise(ActiveRecord::RecordNotFound)
+          expect(Rails.logger).to receive(:warn).with(/Failed to update post cache for rating/)
+
+          expect { rating.update!(rating: 5) }.not_to raise_error
+        end
+
+        it 'handles StaleObjectError gracefully' do
+          allow(post).to receive(:with_lock).and_raise(ActiveRecord::StaleObjectError.new(post, 'update'))
+          expect(Rails.logger).to receive(:warn).with(/Failed to update post cache for rating/)
+
+          expect { rating.update!(rating: 5) }.not_to raise_error
+        end
+      end
     end
   end
 
