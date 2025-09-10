@@ -1,0 +1,376 @@
+openapi: 3.0.1
+info:
+  title: Social App for Fixd API
+  description: |
+    API documentation for the Social App for Fixd authentication system.
+    
+    This API provides endpoints for user registration, authentication, and user management.
+    All endpoints return JSON responses and use JWT tokens for authentication.
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@example.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:3000
+    description: Development server
+  - url: https://api.socialappforfixd.com
+    description: Production server
+
+paths:
+  /api/v1/auth/register:
+    post:
+      tags:
+        - Authentication
+      summary: Register a new user
+      description: Creates a new user account with email, username, and password
+      operationId: registerUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user:
+                  type: object
+                  properties:
+                    email:
+                      type: string
+                      format: email
+                      example: user@example.com
+                      description: User's email address
+                    username:
+                      type: string
+                      minLength: 1
+                      maxLength: 50
+                      pattern: '^[a-zA-Z0-9_]+$'
+                      example: username
+                      description: Unique username (alphanumeric and underscores only)
+                    password:
+                      type: string
+                      minLength: 8
+                      maxLength: 128
+                      example: password123
+                      description: User's password
+                    password_confirmation:
+                      type: string
+                      minLength: 8
+                      maxLength: 128
+                      example: password123
+                      description: Password confirmation (must match password)
+                  required:
+                    - email
+                    - username
+                    - password
+                    - password_confirmation
+            examples:
+              valid_user:
+                summary: Valid user registration
+                value:
+                  user:
+                    email: newuser@example.com
+                    username: newuser
+                    password: password123
+                    password_confirmation: password123
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                        description: User ID
+                      email:
+                        type: string
+                        example: user@example.com
+                        description: User's email
+                      username:
+                        type: string
+                        example: username
+                        description: User's username
+              examples:
+                success:
+                  summary: Successful registration
+                  value:
+                    data:
+                      id: 1
+                      email: newuser@example.com
+                      username: newuser
+        '422':
+          description: Validation errors
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: validation_error
+                      message:
+                        type: string
+                        example: Invalid registration
+                      details:
+                        type: object
+                        additionalProperties:
+                          type: array
+                          items:
+                            type: string
+              examples:
+                validation_error:
+                  summary: Validation errors
+                  value:
+                    error:
+                      code: validation_error
+                      message: Invalid registration
+                      details:
+                        email: ["can't be blank", "is invalid"]
+                        username: ["can't be blank", "is too short (minimum is 1 character)"]
+                        password: ["is too short (minimum is 8 characters)"]
+
+  /api/v1/auth/sign_in:
+    post:
+      tags:
+        - Authentication
+      summary: Sign in user
+      description: Authenticates a user and returns a JWT token
+      operationId: signInUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user:
+                  type: object
+                  properties:
+                    email:
+                      type: string
+                      format: email
+                      example: user@example.com
+                      description: User's email address
+                    password:
+                      type: string
+                      example: password123
+                      description: User's password
+                  required:
+                    - email
+                    - password
+            examples:
+              valid_credentials:
+                summary: Valid credentials
+                value:
+                  user:
+                    email: user@example.com
+                    password: password123
+      responses:
+        '200':
+          description: User signed in successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                        description: User ID
+                      email:
+                        type: string
+                        example: user@example.com
+                        description: User's email
+                      username:
+                        type: string
+                        example: username
+                        description: User's username
+                  token:
+                    type: string
+                    example: jwt_token_placeholder_1
+                    description: JWT token for authentication
+              examples:
+                success:
+                  summary: Successful sign in
+                  value:
+                    data:
+                      id: 1
+                      email: user@example.com
+                      username: username
+                    token: jwt_token_placeholder_1
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: authentication_error
+                      message:
+                        type: string
+                        example: Invalid email or password
+              examples:
+                invalid_credentials:
+                  summary: Invalid credentials
+                  value:
+                    error:
+                      code: authentication_error
+                      message: Invalid email or password
+
+  /api/v1/auth/sign_out:
+    delete:
+      tags:
+        - Authentication
+      summary: Sign out user
+      description: Signs out the current user (token becomes invalid)
+      operationId: signOutUser
+      responses:
+        '204':
+          description: User signed out successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                example: {}
+
+  /api/v1/auth/me:
+    get:
+      tags:
+        - Authentication
+      summary: Get current user
+      description: Returns the current authenticated user information
+      operationId: getCurrentUser
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: User information retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                        description: User ID
+                      email:
+                        type: string
+                        example: user@example.com
+                        description: User's email
+                      username:
+                        type: string
+                        example: username
+                        description: User's username
+              examples:
+                success:
+                  summary: Current user info
+                  value:
+                    data:
+                      id: 1
+                      email: user@example.com
+                      username: username
+        '401':
+          description: Unauthorized - invalid or missing token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: unauthorized
+                      message:
+                        type: string
+                        example: Not authenticated
+              examples:
+                unauthorized:
+                  summary: Unauthorized
+                  value:
+                    error:
+                      code: unauthorized
+                      message: Not authenticated
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        JWT token for authentication. 
+        
+        For testing purposes, use placeholder tokens in the format: `jwt_token_placeholder_{user_id}`
+        
+        Example: `jwt_token_placeholder_1` for user with ID 1
+
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: User ID
+        email:
+          type: string
+          format: email
+          description: User's email address
+        username:
+          type: string
+          description: User's username
+      required:
+        - id
+        - email
+        - username
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              description: Error code
+            message:
+              type: string
+              description: Error message
+            details:
+              type: object
+              description: Additional error details
+              additionalProperties:
+                type: array
+                items:
+                  type: string
+      required:
+        - error
+
+tags:
+  - name: Authentication
+    description: User authentication and management endpoints

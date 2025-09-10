@@ -2,6 +2,12 @@ Rails.application.routes.draw do
   get "/up", to: proc { [200, { "Content-Type" => "application/json" },
                         [ { status: "ok" }.to_json ]] }
 
+  # API Documentation
+  get "/api-docs", to: redirect("/api-docs/")
+  get "/api-docs/", to: proc { |env| 
+    [200, { "Content-Type" => "text/html" }, [File.read(Rails.root.join("public", "api-docs", "index.html"))]]
+  }
+
   namespace :api, defaults: { format: :json } do
     namespace :v1 do
       # This line creates the Devise mapping for :user (REQUIRED)
