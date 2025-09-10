@@ -92,6 +92,13 @@ The API will be available at `http://localhost:3000`
 - `DELETE /api/v1/auth/sign_out` - Sign out user
 - `GET /api/v1/auth/me` - Get current user info
 
+### Timeline
+- `GET /api/v1/timeline` - Get activity timeline of recent posts from all users
+  - Supports pagination (`page`, `per_page`)
+  - Supports filtering by minimum average rating (`min_rating`)
+  - Sorted by creation time (newest first)
+  - Includes post author information, average rating, and rating count
+
 ### Posts
 - `GET /api/v1/posts` - List all posts (paginated)
 - `POST /api/v1/posts` - Create a new post

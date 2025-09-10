@@ -10,6 +10,9 @@ Rails.application.routes.draw do
 
   namespace :api, defaults: { format: :json } do
     namespace :v1 do
+      # Timeline endpoint
+      get "timeline", to: "timeline#index"
+
       resources :posts, except: [ :new, :edit ] do
         resource :rating, only: [ :show, :create, :update, :destroy ]
       end

@@ -317,6 +317,106 @@ paths:
                       code: unauthorized
                       message: Not authenticated
 
+  /api/v1/timeline:
+    get:
+      tags:
+        - Timeline
+      summary: Get activity timeline
+      description: |
+        Returns a paginated timeline of recent posts from all users, sorted by creation time (newest first).
+        Includes post author information, average rating, and rating count.
+        Supports filtering by minimum average rating.
+      operationId: getTimeline
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          description: Page number for pagination
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: per_page
+          in: query
+          description: Number of posts per page
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: min_rating
+          in: query
+          description: Minimum average rating filter (1.0-5.0)
+          required: false
+          schema:
+            type: number
+            minimum: 1.0
+            maximum: 5.0
+            example: 4.0
+      responses:
+        '200':
+          description: Timeline retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                      example: 1
+                    title:
+                      type: string
+                      example: "Amazing Post Title"
+                    body:
+                      type: string
+                      example: "This is the post content..."
+                    view_count:
+                      type: integer
+                      example: 42
+                    average_rating:
+                      type: string
+                      example: "4.5"
+                    rating_count:
+                      type: integer
+                      example: 8
+                    created_at:
+                      type: string
+                      format: date-time
+                      example: "2024-01-15T10:30:00Z"
+                    username:
+                      type: string
+                      example: "john_doe"
+                    user:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 1
+                        username:
+                          type: string
+                          example: "john_doe"
+        '401':
+          description: Unauthorized - invalid or missing token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: unauthorized
+                      message:
+                        type: string
+                        example: Invalid or missing token
+
   /api/v1/posts:
     get:
       tags:
@@ -1447,6 +1547,8 @@ components:
 tags:
   - name: Authentication
     description: User authentication and management endpoints
+  - name: Timeline
+    description: Activity timeline endpoints for viewing recent posts from all users
   - name: Posts
     description: Post management endpoints for creating, reading, updating, and deleting posts
   - name: Ratings
