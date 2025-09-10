@@ -25,14 +25,14 @@ RSpec.describe 'API::V1::Timeline', type: :request do
       it 'returns all active posts' do
         get '/api/v1/timeline', headers: headers
         json_response = JSON.parse(response.body)
-        
+
         expect(json_response.length).to eq(3)
       end
 
       it 'includes post data with author information' do
         get '/api/v1/timeline', headers: headers
         json_response = JSON.parse(response.body)
-        
+
         post_data = json_response.first
         expect(post_data).to include('id', 'title', 'body', 'view_count', 'average_rating', 'rating_count', 'created_at', 'username')
         expect(post_data).to include('user')
@@ -42,22 +42,22 @@ RSpec.describe 'API::V1::Timeline', type: :request do
       it 'orders posts by created_at desc (newest first)' do
         get '/api/v1/timeline', headers: headers
         json_response = JSON.parse(response.body)
-        
+
         titles = json_response.map { |post| post['title'] }
-        expect(titles).to eq(['Post 3', 'Post 2', 'Post 1'])
+        expect(titles).to eq([ 'Post 3', 'Post 2', 'Post 1' ])
       end
 
       it 'supports pagination' do
         get '/api/v1/timeline', params: { page: 1, per_page: 2 }, headers: headers
         json_response = JSON.parse(response.body)
-        
+
         expect(json_response.length).to eq(2)
       end
 
       it 'supports custom per_page parameter' do
         get '/api/v1/timeline', params: { per_page: 1 }, headers: headers
         json_response = JSON.parse(response.body)
-        
+
         expect(json_response.length).to eq(1)
       end
     end
@@ -78,7 +78,7 @@ RSpec.describe 'API::V1::Timeline', type: :request do
       it 'filters posts by minimum average rating' do
         get '/api/v1/timeline', params: { min_rating: 4.0 }, headers: headers
         json_response = JSON.parse(response.body)
-        
+
         titles = json_response.map { |post| post['title'] }
         expect(titles).to include('High Rated Post')
         expect(titles).not_to include('Low Rated Post')
@@ -87,14 +87,14 @@ RSpec.describe 'API::V1::Timeline', type: :request do
       it 'returns empty array when no posts meet minimum rating' do
         get '/api/v1/timeline', params: { min_rating: 6.0 }, headers: headers
         json_response = JSON.parse(response.body)
-        
+
         expect(json_response).to be_empty
       end
 
       it 'includes all posts when min_rating is 0' do
         get '/api/v1/timeline', params: { min_rating: 0 }, headers: headers
         json_response = JSON.parse(response.body)
-        
+
         expect(json_response.length).to be >= 2
       end
     end
@@ -105,7 +105,7 @@ RSpec.describe 'API::V1::Timeline', type: :request do
       it 'excludes deleted posts' do
         get '/api/v1/timeline', headers: headers
         json_response = JSON.parse(response.body)
-        
+
         post_ids = json_response.map { |post| post['id'] }
         expect(post_ids).not_to include(deleted_post.id)
       end
@@ -126,7 +126,7 @@ RSpec.describe 'API::V1::Timeline', type: :request do
       it 'includes posts from all users' do
         get '/api/v1/timeline', headers: headers
         json_response = JSON.parse(response.body)
-        
+
         usernames = json_response.map { |post| post['username'] }
         expect(usernames).to include(user1.username, user2.username, user3.username, user4.username)
       end
@@ -146,7 +146,7 @@ RSpec.describe 'API::V1::Timeline', type: :request do
         start_time = Time.current
         get '/api/v1/timeline', headers: headers
         end_time = Time.current
-        
+
         expect(response).to have_http_status(:ok)
         expect(end_time - start_time).to be < 1.second
       end

@@ -39,7 +39,7 @@ RSpec.describe 'API::V1::Auth::Registrations', type: :request do
       it 'returns user data without password' do
         post '/api/v1/auth/register', params: valid_user_params
         json_response = JSON.parse(response.body)
-        
+
         expect(json_response['data']).to include('id', 'email', 'username')
         expect(json_response['data']).not_to include('password', 'encrypted_password')
         expect(json_response['data']['email']).to eq('test@example.com')
@@ -62,7 +62,7 @@ RSpec.describe 'API::V1::Auth::Registrations', type: :request do
       it 'returns validation errors' do
         post '/api/v1/auth/register', params: invalid_user_params
         json_response = JSON.parse(response.body)
-        
+
         expect(json_response['error']).to include('code', 'message', 'details')
         expect(json_response['error']['code']).to eq('validation_error')
         expect(json_response['error']['details']).to be_present
@@ -75,9 +75,9 @@ RSpec.describe 'API::V1::Auth::Registrations', type: :request do
       it 'returns validation error' do
         post '/api/v1/auth/register', params: valid_user_params
         expect(response).to have_http_status(:unprocessable_content)
-        
+
         json_response = JSON.parse(response.body)
-        expect(json_response['error']['details']).to include('email' => ['has already been taken'])
+        expect(json_response['error']['details']).to include('email' => [ 'has already been taken' ])
       end
     end
 
@@ -87,9 +87,9 @@ RSpec.describe 'API::V1::Auth::Registrations', type: :request do
       it 'returns validation error' do
         post '/api/v1/auth/register', params: valid_user_params
         expect(response).to have_http_status(:unprocessable_content)
-        
+
         json_response = JSON.parse(response.body)
-        expect(json_response['error']['details']).to include('username' => ['has already been taken'])
+        expect(json_response['error']['details']).to include('username' => [ 'has already been taken' ])
       end
     end
   end

@@ -15,7 +15,7 @@ require "action_cable/engine"
 # require "rails/test_unit/railtie"
 
 # Require the gems listed in Gemfile, including any gems
-# you've limited to :test, :development, or :production.
+# you"ve limited to :test, :development, or :production.
 Bundler.require(*Rails.groups)
 
 module SocialAppForFixd
@@ -40,9 +40,9 @@ module SocialAppForFixd
 
     # Configure Redis for caching
     config.cache_store = :redis_cache_store, {
-      url: ENV.fetch('REDIS_URL', 'redis://localhost:6379/0'),
+      url: ENV.fetch("REDIS_URL", "redis://localhost:6379/0"),
       expires_in: 1.hour,
-      namespace: 'social_app_cache'
+      namespace: "social_app_cache"
     }
 
     # Enable performance monitoring in development

@@ -19,14 +19,14 @@ RSpec.describe 'API::V1::Posts', type: :request do
       it 'returns all active posts' do
         get '/api/v1/posts', headers: headers
         json_response = JSON.parse(response.body)
-        
+
         expect(json_response.length).to eq(5)
       end
 
       it 'includes post data with username' do
         get '/api/v1/posts', headers: headers
         json_response = JSON.parse(response.body)
-        
+
         post_data = json_response.first
         expect(post_data).to include('id', 'title', 'body', 'view_count', 'average_rating', 'rating_count', 'created_at', 'username')
       end
@@ -34,7 +34,7 @@ RSpec.describe 'API::V1::Posts', type: :request do
       it 'orders posts by created_at desc' do
         get '/api/v1/posts', headers: headers
         json_response = JSON.parse(response.body)
-        
+
         created_at_times = json_response.map { |post| Time.parse(post['created_at']) }
         expect(created_at_times).to eq(created_at_times.sort.reverse)
       end
@@ -42,7 +42,7 @@ RSpec.describe 'API::V1::Posts', type: :request do
       it 'supports pagination' do
         get '/api/v1/posts', params: { page: 1, per_page: 2 }, headers: headers
         json_response = JSON.parse(response.body)
-        
+
         expect(json_response.length).to eq(2)
       end
     end
@@ -67,7 +67,7 @@ RSpec.describe 'API::V1::Posts', type: :request do
       it 'returns post data' do
         get "/api/v1/posts/#{post.id}", headers: headers
         json_response = JSON.parse(response.body)
-        
+
         expect(json_response).to include('id', 'title', 'body', 'view_count', 'average_rating', 'rating_count', 'created_at', 'username')
         expect(json_response['id']).to eq(post.id)
         expect(json_response['title']).to eq(post.title)
@@ -131,7 +131,7 @@ RSpec.describe 'API::V1::Posts', type: :request do
       it 'returns created post data' do
         post '/api/v1/posts', params: valid_params, headers: headers
         json_response = JSON.parse(response.body)
-        
+
         expect(json_response).to include('id', 'title', 'body')
         expect(json_response['title']).to eq('Test Post')
         expect(json_response['body']).to eq('This is a test post body')
@@ -140,7 +140,7 @@ RSpec.describe 'API::V1::Posts', type: :request do
       it 'associates post with current user' do
         post '/api/v1/posts', params: valid_params, headers: headers
         json_response = JSON.parse(response.body)
-        
+
         created_post = Post.find(json_response['id'])
         expect(created_post.user).to eq(user)
       end
@@ -161,7 +161,7 @@ RSpec.describe 'API::V1::Posts', type: :request do
       it 'returns validation errors' do
         post '/api/v1/posts', params: invalid_params, headers: headers
         json_response = JSON.parse(response.body)
-        
+
         expect(json_response['error']).to be_present
       end
     end
@@ -189,7 +189,7 @@ RSpec.describe 'API::V1::Posts', type: :request do
       it 'updates the post' do
         patch "/api/v1/posts/#{post.id}", params: valid_params, headers: headers
         post.reload
-        
+
         expect(post.title).to eq('Updated Title')
         expect(post.body).to eq('Updated body content')
       end
@@ -202,7 +202,7 @@ RSpec.describe 'API::V1::Posts', type: :request do
       it 'returns updated post data' do
         patch "/api/v1/posts/#{post.id}", params: valid_params, headers: headers
         json_response = JSON.parse(response.body)
-        
+
         expect(json_response['title']).to eq('Updated Title')
         expect(json_response['body']).to eq('Updated body content')
       end
@@ -211,9 +211,9 @@ RSpec.describe 'API::V1::Posts', type: :request do
     context 'with other user\'s post' do
       let(:other_post) { create(:post, user: other_user) }
 
-      it 'returns 404 status' do
+      it 'returns 403 status' do
         patch "/api/v1/posts/#{other_post.id}", params: valid_params, headers: headers
-        expect(response).to have_http_status(:not_found)
+        expect(response).to have_http_status(:forbidden)
       end
     end
   end
@@ -225,7 +225,7 @@ RSpec.describe 'API::V1::Posts', type: :request do
       it 'soft deletes the post' do
         delete "/api/v1/posts/#{post.id}", headers: headers
         post.reload
-        
+
         expect(post.deleted_at).to be_present
       end
 
@@ -235,6 +235,7 @@ RSpec.describe 'API::V1::Posts', type: :request do
       end
 
       it 'does not permanently delete the post' do
+        post # Ensure post is created
         expect {
           delete "/api/v1/posts/#{post.id}", headers: headers
         }.not_to change(Post, :count)
@@ -244,9 +245,9 @@ RSpec.describe 'API::V1::Posts', type: :request do
     context 'with other user\'s post' do
       let(:other_post) { create(:post, user: other_user) }
 
-      it 'returns 404 status' do
+      it 'returns 403 status' do
         delete "/api/v1/posts/#{other_post.id}", headers: headers
-        expect(response).to have_http_status(:not_found)
+        expect(response).to have_http_status(:forbidden)
       end
     end
   end

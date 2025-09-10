@@ -44,7 +44,7 @@ gem "thruster", require: false
 
 # AuthN/Z
 gem "devise"
-gem "devise-jwt"
+# gem "devise-jwt"  # Disabled - using placeholder tokens for development
 gem "cancancan"
 
 # Pagination & forms

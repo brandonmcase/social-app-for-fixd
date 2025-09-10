@@ -9,12 +9,12 @@ if ENV['COVERAGE'] == 'true'
     add_filter '/spec/'
     add_filter '/config/'
     add_filter '/vendor/'
-    
+
     add_group 'Models', 'app/models'
     add_group 'Controllers', 'app/controllers'
     add_group 'Services', 'app/services'
     add_group 'Jobs', 'app/jobs'
-    
+
     minimum_coverage 70
     maximum_coverage_drop 5
   end

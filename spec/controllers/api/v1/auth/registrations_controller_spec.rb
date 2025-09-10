@@ -168,9 +168,10 @@ RSpec.describe Api::V1::Auth::RegistrationsController, type: :controller do
 
     context 'with missing user parameter' do
       it 'raises a parameter missing error' do
-        expect {
-          post :create, params: {}, format: :json
-        }.to raise_error(ActionController::ParameterMissing)
+        post :create, params: {}, format: :json
+        expect(response).to have_http_status(:bad_request)
+        json_response = JSON.parse(response.body)
+        expect(json_response['error']['code']).to eq('missing_parameter')
       end
     end
 
@@ -179,9 +180,10 @@ RSpec.describe Api::V1::Auth::RegistrationsController, type: :controller do
         request.env['CONTENT_TYPE'] = 'application/json'
         request.env['RAW_POST_DATA'] = '{"user":{"email":"test@example.com"'
 
-        expect {
-          post :create, format: :json
-        }.to raise_error(ActionController::ParameterMissing)
+        post :create, format: :json
+        expect(response).to have_http_status(:bad_request)
+        json_response = JSON.parse(response.body)
+        expect(json_response['error']['code']).to eq('missing_parameter')
       end
     end
 

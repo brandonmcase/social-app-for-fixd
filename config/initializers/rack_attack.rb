@@ -7,7 +7,7 @@ class Rack::Attack
   # Throttle sign-in attempts by email
   throttle("logins/email", limit: 5, period: 60) do |req|
     if req.path == "/api/v1/auth/sign_in" && req.post?
-      email = req.params.dig('user', 'email')
+      email = req.params.dig("user", "email")
       email if email.present?
     end
   end
@@ -63,32 +63,32 @@ class Rack::Attack
 
   # Custom response for rate limited requests
   self.throttled_responder = lambda do |env|
-    match_data = env['rack.attack.match_discriminator']
-    match_type = env['rack.attack.matched']
-    
+    match_data = env["rack.attack.match_discriminator"]
+    match_type = env["rack.attack.matched"]
+
     [
       429,
-      { 'Content-Type' => 'application/json' },
-      [{
+      { "Content-Type" => "application/json" },
+      [ {
         error: {
-          code: 'rate_limit_exceeded',
-          message: 'Too many requests. Please try again later.',
+          code: "rate_limit_exceeded",
+          message: "Too many requests. Please try again later.",
           retry_after: 60
         }
-      }.to_json]
+      }.to_json ]
     ]
   end
 
   private
 
   def self.extract_user_id_from_token(req)
-    auth_header = req.get_header('HTTP_AUTHORIZATION')
-    return nil unless auth_header&.start_with?('Bearer ')
+    auth_header = req.get_header("HTTP_AUTHORIZATION")
+    return nil unless auth_header&.start_with?("Bearer ")
 
-    token = auth_header.split(' ').last
-    return nil unless token&.start_with?('jwt_token_placeholder_')
+    token = auth_header.split(" ").last
+    return nil unless token&.start_with?("jwt_token_placeholder_")
 
-    user_id_str = token.split('_').last
+    user_id_str = token.split("_").last
     user_id_str.to_i if user_id_str.match?(/\A\d+\z/)
   end
 end

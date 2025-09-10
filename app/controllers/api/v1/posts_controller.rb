@@ -2,7 +2,7 @@ module Api
   module V1
     class PostsController < BaseController
       before_action :authenticate_user!
-      before_action :set_post, only: [:show, :update, :destroy]
+      before_action :set_post, only: [ :show, :update, :destroy ]
 
       # GET /api/v1/posts
       def index
@@ -43,7 +43,7 @@ module Api
       def update
         # Check if user owns the post
         unless @post.user == current_user
-          return render json: { error: { code: "not_found", message: "Post not found" } }, status: :not_found
+          return render json: { error: { code: "forbidden", message: "Not authorized to update this post" } }, status: :forbidden
         end
 
         if @post.update(post_params)
@@ -59,7 +59,7 @@ module Api
       def destroy
         # Check if user owns the post
         unless @post.user == current_user
-          return render json: { error: { code: "not_found", message: "Post not found" } }, status: :not_found
+          return render json: { error: { code: "forbidden", message: "Not authorized to delete this post" } }, status: :forbidden
         end
 
         @post.update(deleted_at: Time.current)

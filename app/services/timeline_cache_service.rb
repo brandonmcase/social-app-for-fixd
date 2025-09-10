@@ -1,10 +1,10 @@
 class TimelineCacheService
   CACHE_EXPIRY = 5.minutes
-  CACHE_KEY_PREFIX = 'timeline'
+  CACHE_KEY_PREFIX = "timeline"
 
   def self.fetch_timeline(page: 1, per_page: 20, min_rating: nil)
     cache_key = build_cache_key(page, per_page, min_rating)
-    
+
     Rails.cache.fetch(cache_key, expires_in: CACHE_EXPIRY) do
       fetch_timeline_from_db(page, per_page, min_rating)
     end
@@ -23,9 +23,9 @@ class TimelineCacheService
   private
 
   def self.build_cache_key(page, per_page, min_rating)
-    key_parts = [CACHE_KEY_PREFIX, page, per_page]
+    key_parts = [ CACHE_KEY_PREFIX, page, per_page ]
     key_parts << "min_rating_#{min_rating}" if min_rating.present?
-    key_parts.join(':')
+    key_parts.join(":")
   end
 
   def self.fetch_timeline_from_db(page, per_page, min_rating)
@@ -41,11 +41,11 @@ class TimelineCacheService
     end
 
     posts.as_json(
-      only: [:id, :title, :body, :view_count, :average_rating, :rating_count, :created_at],
-      methods: [:username],
+      only: [ :id, :title, :body, :view_count, :average_rating, :rating_count, :created_at ],
+      methods: [ :username ],
       include: {
         user: {
-          only: [:id, :username]
+          only: [ :id, :username ]
         }
       }
     )

@@ -19,7 +19,7 @@ RSpec.describe 'API::V1::Ratings', type: :request do
       it 'returns rating data' do
         get "/api/v1/posts/#{test_post.id}/rating", headers: headers
         json_response = JSON.parse(response.body)
-        
+
         expect(json_response).to include('id', 'rating', 'user_id', 'post_id')
         expect(json_response['rating']).to eq(4)
         expect(json_response['user_id']).to eq(user.id)
@@ -36,7 +36,7 @@ RSpec.describe 'API::V1::Ratings', type: :request do
       it 'returns not found error' do
         get "/api/v1/posts/#{test_post.id}/rating", headers: headers
         json_response = JSON.parse(response.body)
-        
+
         expect(json_response['error']).to eq('No rating found')
       end
     end
@@ -81,7 +81,7 @@ RSpec.describe 'API::V1::Ratings', type: :request do
       it 'returns created rating data' do
         post "/api/v1/posts/#{test_post.id}/rating", params: valid_params, headers: headers
         json_response = JSON.parse(response.body)
-        
+
         expect(json_response).to include('id', 'rating', 'user_id', 'post_id')
         expect(json_response['rating']).to eq(5)
         expect(json_response['user_id']).to eq(user.id)
@@ -91,7 +91,7 @@ RSpec.describe 'API::V1::Ratings', type: :request do
       it 'updates post rating statistics' do
         post "/api/v1/posts/#{test_post.id}/rating", params: valid_params, headers: headers
         test_post.reload
-        
+
         expect(test_post.average_rating).to eq(5.0)
         expect(test_post.rating_count).to eq(1)
       end
@@ -112,7 +112,7 @@ RSpec.describe 'API::V1::Ratings', type: :request do
       it 'returns validation errors' do
         post "/api/v1/posts/#{test_post.id}/rating", params: invalid_params, headers: headers
         json_response = JSON.parse(response.body)
-        
+
         expect(json_response['error']).to be_present
       end
     end
@@ -154,7 +154,7 @@ RSpec.describe 'API::V1::Ratings', type: :request do
       it 'updates the rating' do
         patch "/api/v1/posts/#{test_post.id}/rating", params: valid_params, headers: headers
         rating.reload
-        
+
         expect(rating.rating).to eq(5)
       end
 
@@ -166,14 +166,14 @@ RSpec.describe 'API::V1::Ratings', type: :request do
       it 'returns updated rating data' do
         patch "/api/v1/posts/#{test_post.id}/rating", params: valid_params, headers: headers
         json_response = JSON.parse(response.body)
-        
+
         expect(json_response['rating']).to eq(5)
       end
 
       it 'updates post rating statistics' do
         patch "/api/v1/posts/#{test_post.id}/rating", params: valid_params, headers: headers
         test_post.reload
-        
+
         expect(test_post.average_rating).to eq(5.0)
         expect(test_post.rating_count).to eq(1)
       end
@@ -201,7 +201,7 @@ RSpec.describe 'API::V1::Ratings', type: :request do
         original_rating = rating.rating
         patch "/api/v1/posts/#{test_post.id}/rating", params: invalid_params, headers: headers
         rating.reload
-        
+
         expect(rating.rating).to eq(original_rating)
       end
 
@@ -230,7 +230,7 @@ RSpec.describe 'API::V1::Ratings', type: :request do
       it 'updates post rating statistics' do
         delete "/api/v1/posts/#{test_post.id}/rating", headers: headers
         test_post.reload
-        
+
         expect(test_post.average_rating).to eq(0.0)
         expect(test_post.rating_count).to eq(0)
       end
