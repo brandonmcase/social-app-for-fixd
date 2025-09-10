@@ -2,6 +2,7 @@ module Api
   module V1
     module Auth
       class SessionsController < BaseController
+        include JwtAuthenticatable
         respond_to :json
         before_action :authenticate_user!, only: [ :me ]
 
@@ -27,12 +28,11 @@ module Api
           # Extract token from Authorization header
           token = extract_token_from_header
 
-          if token && token.start_with?("jwt_token_placeholder_")
-            # For our placeholder tokens, we could add them to a denylist
-            # For now, we'll just return success
+          if token
+            # For real JWT tokens, we could add them to a denylist
+            # For now, we'll just return success (client should discard token)
             head :no_content
           else
-            # Handle real JWT tokens if they exist
             head :no_content
           end
         end
@@ -47,20 +47,14 @@ module Api
           params.require(:user).permit(:email, :password)
         end
 
-        def generate_jwt_token(user)
-          # This would typically use the JWT gem to generate a token
-          # For now, we'll return a placeholder
-          "jwt_token_placeholder_#{user.id}"
-        end
-
         def authenticate_user!
           token = extract_token_from_header
           return render_unauthorized unless token
 
-          user_id = extract_user_id_from_token(token)
-          return render_unauthorized unless user_id
+          payload = decode_jwt_token(token)
+          return render_unauthorized unless payload
 
-          @current_user = User.find_by(id: user_id)
+          @current_user = User.find_by(id: payload["user_id"])
           render_unauthorized unless @current_user
         end
 
@@ -73,13 +67,6 @@ module Api
           return nil unless auth_header&.start_with?("Bearer ")
 
           auth_header.split(" ").last
-        end
-
-        def extract_user_id_from_token(token)
-          # For our placeholder token, extract the user ID
-          return nil unless token&.start_with?("jwt_token_placeholder_")
-
-          token.split("_").last.to_i
         end
 
         def render_unauthorized

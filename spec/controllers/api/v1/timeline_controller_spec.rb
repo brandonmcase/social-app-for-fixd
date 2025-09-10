@@ -1,12 +1,14 @@
 require "rails_helper"
 
 RSpec.describe Api::V1::TimelineController, type: :controller do
+  include JwtTokenHelper
+
   let(:user) { create(:user) }
   let(:other_user) { create(:user) }
   let(:third_user) { create(:user) }
 
   before do
-    request.headers["Authorization"] = "Bearer jwt_token_placeholder_#{user.id}"
+    request.headers["Authorization"] = "Bearer #{generate_jwt_token(user)}"
   end
 
   describe "GET #index" do

@@ -208,12 +208,26 @@ Direct access to the OpenAPI spec: `http://localhost:3000/api-docs/swagger.yaml`
 The API uses JWT tokens for authentication. Include the token in the Authorization header:
 
 ```
-Authorization: Bearer jwt_token_placeholder_{user_id}
+Authorization: Bearer <jwt_token>
 ```
 
-For testing purposes, placeholder tokens are used in the format: `jwt_token_placeholder_{user_id}`
+Real JWT tokens are generated upon successful login/registration and contain user information.
+Tokens expire after 24 hours and must be included in the Authorization header.
 
-Example: `jwt_token_placeholder_1` for user with ID 1
+To get a token, first register or sign in:
+```bash
+# Register a new user
+curl -X POST http://localhost:3000/api/v1/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"user": {"email": "test@example.com", "username": "testuser", "password": "password123", "password_confirmation": "password123"}}'
+
+# Sign in
+curl -X POST http://localhost:3000/api/v1/auth/sign_in \
+  -H "Content-Type: application/json" \
+  -d '{"user": {"email": "test@example.com", "password": "password123"}}'
+```
+
+Both endpoints will return a JWT token in the response that you can use for subsequent API calls.
 
 ## Testing
 

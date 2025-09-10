@@ -1,10 +1,12 @@
 require 'rails_helper'
 
 RSpec.describe 'API::V1::Ratings', type: :request do
+  include JwtTokenHelper
+
   let(:user) { create(:user) }
   let(:other_user) { create(:user) }
   let(:test_post) { create(:post, user: other_user) }
-  let(:token) { "jwt_token_placeholder_#{user.id}" }
+  let(:token) { generate_jwt_token(user) }
   let(:headers) { { 'Authorization' => "Bearer #{token}" } }
 
   describe 'GET /api/v1/posts/:post_id/rating' do

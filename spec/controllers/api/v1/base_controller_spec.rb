@@ -1,6 +1,8 @@
 require 'rails_helper'
 
 RSpec.describe Api::V1::BaseController, type: :controller do
+  include JwtTokenHelper
+
   # Create a test controller to test the base controller functionality
   controller do
     def test_action
@@ -26,7 +28,7 @@ RSpec.describe Api::V1::BaseController, type: :controller do
   end
 
   let(:user) { create(:user) }
-  let(:token) { "jwt_token_placeholder_#{user.id}" }
+  let(:token) { generate_jwt_token(user) }
   let(:headers) { { 'Authorization' => "Bearer #{token}" } }
 
   before do
@@ -60,22 +62,30 @@ RSpec.describe Api::V1::BaseController, type: :controller do
     end
 
     context 'with invalid token format' do
-      it 'denies access for non-placeholder tokens' do
+      it 'denies access for invalid tokens' do
         invalid_headers = { 'Authorization' => 'Bearer invalid_token' }
         request.headers.merge!(invalid_headers)
         get :test_action
         expect(response).to have_http_status(:unauthorized)
       end
 
-      it 'denies access for malformed placeholder tokens' do
-        invalid_headers = { 'Authorization' => 'Bearer jwt_token_placeholder_invalid' }
+      it 'denies access for malformed JWT tokens' do
+        invalid_headers = { 'Authorization' => 'Bearer eyJhbGciOiJIUzI1NiJ9.invalid' }
         request.headers.merge!(invalid_headers)
         get :test_action
         expect(response).to have_http_status(:unauthorized)
       end
 
-      it 'denies access for non-numeric user ID' do
-        invalid_headers = { 'Authorization' => 'Bearer jwt_token_placeholder_abc' }
+      it 'denies access for expired tokens' do
+        expired_payload = {
+          user_id: user.id,
+          email: user.email,
+          username: user.username,
+          exp: 1.hour.ago.to_i, # Expired
+          iat: 2.hours.ago.to_i
+        }
+        expired_token = JWT.encode(expired_payload, jwt_secret, 'HS256')
+        invalid_headers = { 'Authorization' => "Bearer #{expired_token}" }
         request.headers.merge!(invalid_headers)
         get :test_action
         expect(response).to have_http_status(:unauthorized)
@@ -84,7 +94,15 @@ RSpec.describe Api::V1::BaseController, type: :controller do
 
     context 'with non-existent user' do
       it 'denies access' do
-        invalid_headers = { 'Authorization' => 'Bearer jwt_token_placeholder_99999' }
+        non_existent_payload = {
+          user_id: 99999,
+          email: 'nonexistent@example.com',
+          username: 'nonexistent',
+          exp: 24.hours.from_now.to_i,
+          iat: Time.current.to_i
+        }
+        invalid_token = JWT.encode(non_existent_payload, jwt_secret, 'HS256')
+        invalid_headers = { 'Authorization' => "Bearer #{invalid_token}" }
         request.headers.merge!(invalid_headers)
         get :test_action
         expect(response).to have_http_status(:unauthorized)

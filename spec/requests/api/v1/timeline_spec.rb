@@ -1,8 +1,10 @@
 require 'rails_helper'
 
 RSpec.describe 'API::V1::Timeline', type: :request do
+  include JwtTokenHelper
+
   let(:user) { create(:user) }
-  let(:token) { "jwt_token_placeholder_#{user.id}" }
+  let(:token) { generate_jwt_token(user) }
   let(:headers) { { 'Authorization' => "Bearer #{token}" } }
 
   describe 'GET /api/v1/timeline' do

@@ -1393,9 +1393,10 @@ components:
       description: |
         JWT token for authentication. 
         
-        For testing purposes, use placeholder tokens in the format: `jwt_token_placeholder_{user_id}`
+        Real JWT tokens are generated upon successful login/registration and contain user information.
+        Tokens expire after 24 hours and must be included in the Authorization header.
         
-        Example: `jwt_token_placeholder_1` for user with ID 1
+        Example: `eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoxLCJlbWFpbCI6InRlc3RAZXhhbXBsZS5jb20iLCJ1c2VybmFtZSI6InRlc3R1c2VyIiwiZXhwIjoxNzM2NDQ4MDAwLCJpYXQiOjE3MzYzNjE2MDB9.example_signature`
 
   schemas:
     User:

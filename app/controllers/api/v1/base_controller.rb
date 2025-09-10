@@ -3,6 +3,7 @@ module Api
     class BaseController < ActionController::API
       include JsonResponder
       include Devise::Controllers::Helpers
+      include JwtAuthenticatable
 
       before_action :authenticate_user!
 
@@ -33,10 +34,10 @@ module Api
         token = extract_token_from_header
         return render_unauthorized unless token
 
-        user_id = extract_user_id_from_token(token)
-        return render_unauthorized unless user_id
+        payload = decode_jwt_token(token)
+        return render_unauthorized unless payload
 
-        @current_user = User.find_by(id: user_id)
+        @current_user = User.find_by(id: payload["user_id"])
         render_unauthorized unless @current_user
       end
 
@@ -49,14 +50,6 @@ module Api
         return nil unless auth_header&.start_with?("Bearer ")
 
         auth_header.split(" ").last
-      end
-
-      def extract_user_id_from_token(token)
-        # Extract user ID from placeholder token format: jwt_token_placeholder_{user_id}
-        return nil unless token&.start_with?("jwt_token_placeholder_")
-
-        user_id_str = token.split("_").last
-        user_id_str.to_i if user_id_str.match?(/\A\d+\z/)
       end
 
       def render_unauthorized

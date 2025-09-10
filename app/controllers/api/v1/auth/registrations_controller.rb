@@ -2,13 +2,17 @@ module Api
   module V1
     module Auth
       class RegistrationsController < BaseController
+        include JwtAuthenticatable
         respond_to :json
 
         def create
           user = User.new(user_params)
 
           if user.save
-            render json: { data: user.slice(:id, :email, :username) }, status: :created
+            render json: {
+              data: user.slice(:id, :email, :username),
+              token: generate_jwt_token(user)
+            }, status: :created
           else
             render json: { error: { code: "validation_error", message: "Invalid registration", details: user.errors } },
                    status: :unprocessable_content

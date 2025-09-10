@@ -1,6 +1,8 @@
 require 'rails_helper'
 
 RSpec.describe 'API::V1::Auth::Sessions', type: :request do
+  include JwtTokenHelper
+
   let(:user) { create(:user, email: 'test@example.com', password: 'password123', password_confirmation: 'password123') }
 
   describe 'POST /api/v1/auth/sign_in' do
@@ -36,7 +38,8 @@ RSpec.describe 'API::V1::Auth::Sessions', type: :request do
 
         expect(json_response['data']).to include('id', 'email', 'username')
         expect(json_response['token']).to be_present
-        expect(json_response['token']).to start_with('jwt_token_placeholder_')
+        expect(json_response['token']).to be_a(String)
+        expect(json_response['token']).to include('.') # JWT tokens have dots
       end
 
       it 'returns correct user data' do
@@ -83,7 +86,7 @@ RSpec.describe 'API::V1::Auth::Sessions', type: :request do
   end
 
   describe 'DELETE /api/v1/auth/sign_out' do
-    let(:token) { "jwt_token_placeholder_#{user.id}" }
+    let(:token) { generate_jwt_token(user) }
     let(:headers) { { 'Authorization' => "Bearer #{token}" } }
 
     context 'with valid token' do
@@ -102,7 +105,7 @@ RSpec.describe 'API::V1::Auth::Sessions', type: :request do
   end
 
   describe 'GET /api/v1/auth/me' do
-    let(:token) { "jwt_token_placeholder_#{user.id}" }
+    let(:token) { generate_jwt_token(user) }
     let(:headers) { { 'Authorization' => "Bearer #{token}" } }
 
     context 'with valid token' do

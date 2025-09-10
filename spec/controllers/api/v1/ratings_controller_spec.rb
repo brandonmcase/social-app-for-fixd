@@ -1,14 +1,16 @@
 require 'rails_helper'
 
 RSpec.describe Api::V1::RatingsController, type: :controller do
+  include JwtTokenHelper
+
   let(:user) { create(:user) }
   let(:other_user) { create(:user) }
   let(:test_post) { create(:post, user: user) }
-  let(:other_user_token) { "jwt_token_placeholder_#{other_user.id}" }
+  let(:other_user_token) { generate_jwt_token(other_user) }
   let(:invalid_token) { "invalid_token" }
 
   before do
-    request.headers['Authorization'] = "Bearer jwt_token_placeholder_#{user.id}"
+    request.headers['Authorization'] = "Bearer #{generate_jwt_token(user)}"
   end
 
   describe 'GET #show' do
@@ -306,7 +308,7 @@ RSpec.describe Api::V1::RatingsController, type: :controller do
 
   describe 'multiple users rating same post' do
     let(:user2) { create(:user) }
-    let(:user2_token) { "jwt_token_placeholder_#{user2.id}" }
+    let(:user2_token) { generate_jwt_token(user2) }
 
     it 'allows multiple users to rate the same post' do
       # User 1 rates the post
