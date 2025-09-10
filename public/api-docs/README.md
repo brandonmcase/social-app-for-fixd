@@ -29,6 +29,13 @@ Direct access to the OpenAPI spec: http://localhost:3000/api-docs/swagger.yaml
 - `DELETE /api/v1/auth/sign_out` - Sign out user
 - `GET /api/v1/auth/me` - Get current user info (requires authentication)
 
+### Posts
+- `GET /api/v1/posts` - List all posts (requires authentication)
+- `POST /api/v1/posts` - Create a new post (requires authentication)
+- `GET /api/v1/posts/:id` - Get a specific post (requires authentication)
+- `PATCH /api/v1/posts/:id` - Update a post (requires authentication, owner only)
+- `DELETE /api/v1/posts/:id` - Delete a post (requires authentication, owner only)
+
 ## Authentication
 
 The API uses JWT tokens for authentication. For testing purposes, placeholder tokens are used in the format:

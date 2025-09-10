@@ -2,9 +2,9 @@ openapi: 3.0.1
 info:
   title: Social App for Fixd API
   description: |
-    API documentation for the Social App for Fixd authentication system.
+    API documentation for the Social App for Fixd.
     
-    This API provides endpoints for user registration, authentication, and user management.
+    This API provides endpoints for user registration, authentication, user management, and post management.
     All endpoints return JSON responses and use JWT tokens for authentication.
   version: 1.0.0
   contact:
@@ -317,6 +317,336 @@ paths:
                       code: unauthorized
                       message: Not authenticated
 
+  /api/v1/posts:
+    get:
+      tags:
+        - Posts
+      summary: List all posts
+      description: Returns a paginated list of all active posts
+      operationId: listPosts
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          description: Page number for pagination
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: per_page
+          in: query
+          description: Number of posts per page
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: Posts retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Post'
+              examples:
+                success:
+                  summary: List of posts
+                  value:
+                    - id: 1
+                      title: "My First Post"
+                      body: "This is the content of my first post."
+                      username: "john_doe"
+                      view_count: 15
+                      created_at: "2024-01-15T10:30:00Z"
+                    - id: 2
+                      title: "Another Post"
+                      body: "This is another post with some content."
+                      username: "jane_smith"
+                      view_count: 8
+                      created_at: "2024-01-15T09:15:00Z"
+        '401':
+          description: Unauthorized - invalid or missing token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      tags:
+        - Posts
+      summary: Create a new post
+      description: Creates a new post for the authenticated user
+      operationId: createPost
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                post:
+                  type: object
+                  properties:
+                    title:
+                      type: string
+                      minLength: 1
+                      maxLength: 100
+                      example: "My Amazing Post"
+                      description: Post title
+                    body:
+                      type: string
+                      minLength: 1
+                      maxLength: 1000
+                      example: "This is the content of my post. It can be quite long and detailed."
+                      description: Post content
+                  required:
+                    - title
+                    - body
+            examples:
+              valid_post:
+                summary: Valid post creation
+                value:
+                  post:
+                    title: "My Amazing Post"
+                    body: "This is the content of my post. It can be quite long and detailed."
+      responses:
+        '201':
+          description: Post created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+              examples:
+                success:
+                  summary: Created post
+                  value:
+                    id: 1
+                    title: "My Amazing Post"
+                    body: "This is the content of my post. It can be quite long and detailed."
+                    username: "john_doe"
+                    view_count: 0
+                    created_at: "2024-01-15T10:30:00Z"
+        '401':
+          description: Unauthorized - invalid or missing token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Validation errors
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                validation_error:
+                  summary: Validation errors
+                  value:
+                    error:
+                      code: validation_error
+                      message: Invalid post data
+                      details:
+                        title: ["can't be blank"]
+                        body: ["is too long (maximum is 1000 characters)"]
+
+  /api/v1/posts/{id}:
+    get:
+      tags:
+        - Posts
+      summary: Get a specific post
+      description: Returns a specific post by ID and increments its view count
+      operationId: getPost
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Post ID
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: Post retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+              examples:
+                success:
+                  summary: Post details
+                  value:
+                    id: 1
+                    title: "My Amazing Post"
+                    body: "This is the content of my post. It can be quite long and detailed."
+                    username: "john_doe"
+                    view_count: 16
+                    created_at: "2024-01-15T10:30:00Z"
+        '401':
+          description: Unauthorized - invalid or missing token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Post not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                not_found:
+                  summary: Post not found
+                  value:
+                    error:
+                      code: not_found
+                      message: Not found
+
+    patch:
+      tags:
+        - Posts
+      summary: Update a post
+      description: Updates a post (only by the post owner)
+      operationId: updatePost
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Post ID
+          schema:
+            type: integer
+            example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                post:
+                  type: object
+                  properties:
+                    title:
+                      type: string
+                      minLength: 1
+                      maxLength: 100
+                      example: "Updated Post Title"
+                      description: Post title
+                    body:
+                      type: string
+                      minLength: 1
+                      maxLength: 1000
+                      example: "Updated post content with new information."
+                      description: Post content
+            examples:
+              valid_update:
+                summary: Valid post update
+                value:
+                  post:
+                    title: "Updated Post Title"
+                    body: "Updated post content with new information."
+      responses:
+        '200':
+          description: Post updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+              examples:
+                success:
+                  summary: Updated post
+                  value:
+                    id: 1
+                    title: "Updated Post Title"
+                    body: "Updated post content with new information."
+                    username: "john_doe"
+                    view_count: 16
+                    created_at: "2024-01-15T10:30:00Z"
+        '401':
+          description: Unauthorized - invalid or missing token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden - user can only update their own posts
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                forbidden:
+                  summary: Forbidden
+                  value:
+                    error:
+                      code: forbidden
+                      message: Not authorized to perform this action
+        '404':
+          description: Post not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Validation errors
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      tags:
+        - Posts
+      summary: Delete a post
+      description: Soft deletes a post (only by the post owner)
+      operationId: deletePost
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Post ID
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '204':
+          description: Post deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                example: {}
+        '401':
+          description: Unauthorized - invalid or missing token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden - user can only delete their own posts
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Post not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
 components:
   securitySchemes:
     BearerAuth:
@@ -349,6 +679,42 @@ components:
         - email
         - username
 
+    Post:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Post ID
+          example: 1
+        title:
+          type: string
+          description: Post title
+          example: "My Amazing Post"
+        body:
+          type: string
+          description: Post content
+          example: "This is the content of my post."
+        username:
+          type: string
+          description: Username of the post author
+          example: "john_doe"
+        view_count:
+          type: integer
+          description: Number of times the post has been viewed
+          example: 15
+        created_at:
+          type: string
+          format: date-time
+          description: When the post was created
+          example: "2024-01-15T10:30:00Z"
+      required:
+        - id
+        - title
+        - body
+        - username
+        - view_count
+        - created_at
+
     Error:
       type: object
       properties:
@@ -374,3 +740,5 @@ components:
 tags:
   - name: Authentication
     description: User authentication and management endpoints
+  - name: Posts
+    description: Post management endpoints for creating, reading, updating, and deleting posts

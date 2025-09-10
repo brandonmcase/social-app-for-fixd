@@ -10,6 +10,8 @@ Rails.application.routes.draw do
 
   namespace :api, defaults: { format: :json } do
     namespace :v1 do
+
+      resources :posts, except: [:new, :edit]
       # This line creates the Devise mapping for :user (REQUIRED)
       devise_for :users,
                  path: "auth",

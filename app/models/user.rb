@@ -3,6 +3,8 @@ class User < ApplicationRecord
          :recoverable, :validatable,
          :jwt_authenticatable, jwt_revocation_strategy: JwtDenylist
 
+  has_many :posts, dependent: :destroy
+
   validates :username, presence: true,
                        uniqueness: { case_sensitive: false },
                        length: { maximum: 50 },
