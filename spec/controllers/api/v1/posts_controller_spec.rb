@@ -37,6 +37,22 @@ RSpec.describe Api::V1::PostsController, type: :controller do
       expect(json_response.first['username']).to eq(user.username)
     end
 
+    it 'includes rating information in response' do
+      # Add ratings to posts
+      create(:rating, post: posts.first, user: user, rating: 4)
+      create(:rating, post: posts.first, user: other_user, rating: 5)
+      
+      get :index
+      json_response = JSON.parse(response.body)
+      
+      # Find the post with ratings in the response
+      rated_post = json_response.find { |p| p['id'] == posts.first.id }
+      
+      expect(rated_post).to include('average_rating', 'rating_count')
+      expect(rated_post['average_rating']).to eq('4.5')
+      expect(rated_post['rating_count']).to eq(2)
+    end
+
     it 'orders posts by created_at desc' do
       get :index
       json_response = JSON.parse(response.body)
@@ -66,6 +82,22 @@ RSpec.describe Api::V1::PostsController, type: :controller do
       get :show, params: { id: user_post.id }
       json_response = JSON.parse(response.body)
       expect(json_response['username']).to eq(user.username)
+    end
+
+    it 'includes rating information in response' do
+      # Add ratings to the post
+      create(:rating, post: user_post, user: user, rating: 4)
+      create(:rating, post: user_post, user: other_user, rating: 5)
+      
+      # Reload the post to get updated cached statistics
+      user_post.reload
+      
+      get :show, params: { id: user_post.id }
+      json_response = JSON.parse(response.body)
+      
+      expect(json_response).to include('average_rating', 'rating_count')
+      expect(json_response['average_rating']).to eq('4.5')
+      expect(json_response['rating_count']).to eq(2)
     end
 
     it 'increments view count' do

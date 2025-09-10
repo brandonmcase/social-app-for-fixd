@@ -5,6 +5,19 @@ RSpec.describe Post, type: :model do
     it 'belongs to user' do
       expect(Post.reflect_on_association(:user).macro).to eq(:belongs_to)
     end
+
+    it 'has many ratings' do
+      expect(Post.reflect_on_association(:ratings).macro).to eq(:has_many)
+    end
+
+    it 'destroys associated ratings when deleted' do
+      post = create(:post)
+      rating = create(:rating, post: post)
+      
+      expect {
+        post.destroy
+      }.to change(Rating, :count).by(-1)
+    end
   end
 
   describe 'validations' do
@@ -118,15 +131,78 @@ RSpec.describe Post, type: :model do
   end
 
   describe 'rating functionality' do
-    let(:post) { create(:post, :with_rating) }
+    let(:post) { create(:post) }
+    let(:user1) { create(:user) }
+    let(:user2) { create(:user) }
 
-    it 'can store average rating' do
-      expect(post.average_rating).to be > 0
-      expect(post.average_rating).to be <= 5.0
+    describe 'rating associations' do
+      it 'can have multiple ratings' do
+        create(:rating, post: post, user: user1, rating: 4)
+        create(:rating, post: post, user: user2, rating: 5)
+        
+        expect(post.ratings.count).to eq(2)
+        expect(post.ratings.pluck(:rating)).to contain_exactly(4, 5)
+      end
+
+      it 'calculates average rating correctly' do
+        create(:rating, post: post, user: user1, rating: 3)
+        create(:rating, post: post, user: user2, rating: 5)
+        
+        post.reload
+        expect(post.average_rating).to eq(4.0)
+      end
+
+      it 'tracks rating count correctly' do
+        create(:rating, post: post, user: user1, rating: 4)
+        create(:rating, post: post, user: user2, rating: 5)
+        
+        post.reload
+        expect(post.rating_count).to eq(2)
+      end
+
+      it 'handles zero ratings correctly' do
+        expect(post.average_rating).to eq(0.0)
+        expect(post.rating_count).to eq(0)
+      end
+
+      it 'updates cached statistics when ratings change' do
+        rating1 = create(:rating, post: post, user: user1, rating: 3)
+        rating2 = create(:rating, post: post, user: user2, rating: 5)
+        
+        post.reload
+        expect(post.average_rating).to eq(4.0)
+        expect(post.rating_count).to eq(2)
+
+        # Update a rating
+        rating1.update!(rating: 1)
+        post.reload
+        expect(post.average_rating).to eq(3.0)
+        expect(post.rating_count).to eq(2)
+
+        # Delete a rating
+        rating2.destroy
+        post.reload
+        expect(post.average_rating).to eq(1.0)
+        expect(post.rating_count).to eq(1)
+      end
     end
 
-    it 'can store rating count' do
-      expect(post.rating_count).to be > 0
+    describe 'rating statistics' do
+      it 'rounds average rating to 2 decimal places' do
+        create(:rating, post: post, user: user1, rating: 3)
+        create(:rating, post: post, user: user2, rating: 4)
+        
+        post.reload
+        expect(post.average_rating).to eq(3.5)
+      end
+
+      it 'handles single rating correctly' do
+        create(:rating, post: post, user: user1, rating: 4)
+        
+        post.reload
+        expect(post.average_rating).to eq(4.0)
+        expect(post.rating_count).to eq(1)
+      end
     end
   end
 

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_09_10_024132) do
+ActiveRecord::Schema[8.0].define(version: 2025_09_10_030615) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -46,6 +46,20 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_10_024132) do
     t.index ["user_id"], name: "index_posts_on_user_id"
   end
 
+  create_table "ratings", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "post_id", null: false
+    t.integer "rating", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["post_id", "created_at"], name: "index_ratings_on_post_id_and_created_at"
+    t.index ["post_id"], name: "index_ratings_on_post_id"
+    t.index ["user_id", "created_at"], name: "index_ratings_on_user_id_and_created_at"
+    t.index ["user_id", "post_id"], name: "index_ratings_on_user_id_and_post_id", unique: true
+    t.index ["user_id"], name: "index_ratings_on_user_id"
+    t.check_constraint "rating >= 1 AND rating <= 5", name: "rating_range_check"
+  end
+
   create_table "users", force: :cascade do |t|
     t.string "email", default: "", null: false
     t.string "encrypted_password", default: "", null: false
@@ -61,4 +75,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_10_024132) do
   end
 
   add_foreign_key "posts", "users"
+  add_foreign_key "ratings", "posts"
+  add_foreign_key "ratings", "users"
 end

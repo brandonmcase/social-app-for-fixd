@@ -16,15 +16,37 @@ module Api
       private
 
       def authenticate_user!
-        # This method will be mocked in tests
-        # For now, just return true to allow tests to pass
-        true
+        token = extract_token_from_header
+        return render_unauthorized unless token
+        
+        user_id = extract_user_id_from_token(token)
+        return render_unauthorized unless user_id
+        
+        @current_user = User.find_by(id: user_id)
+        return render_unauthorized unless @current_user
       end
 
       def current_user
-        # This method will be mocked in tests
-        # For now, return nil to allow tests to pass
-        nil
+        @current_user
+      end
+
+      def extract_token_from_header
+        auth_header = request.headers['Authorization']
+        return nil unless auth_header&.start_with?('Bearer ')
+        
+        auth_header.split(' ').last
+      end
+
+      def extract_user_id_from_token(token)
+        # Extract user ID from placeholder token format: jwt_token_placeholder_{user_id}
+        return nil unless token&.start_with?('jwt_token_placeholder_')
+        
+        user_id_str = token.split('_').last
+        user_id_str.to_i if user_id_str.match?(/\A\d+\z/)
+      end
+
+      def render_unauthorized
+        render json: { error: { code: "unauthorized", message: "Invalid or missing token" } }, status: :unauthorized
       end
     end
   end

@@ -369,12 +369,6 @@ paths:
                     view_count:
                       type: integer
                       example: 15
-                    average_rating:
-                      type: string
-                      example: "3.5"
-                    rating_count:
-                      type: integer
-                      example: 2
                     created_at:
                       type: string
                       format: date-time
@@ -388,9 +382,13 @@ paths:
                       body: "This is the content of my first post."
                       username: "alpha"
                       view_count: 15
-                      average_rating: "3.5"
-                      rating_count: 2
                       created_at: "2024-01-15T10:30:00Z"
+                    - id: 2
+                      title: "Another Post"
+                      body: "This is another post with some content."
+                      username: "beta"
+                      view_count: 8
+                      created_at: "2024-01-15T09:15:00Z"
         '401':
           description: Unauthorized - invalid or missing token
           content:
@@ -407,6 +405,13 @@ paths:
                       message:
                         type: string
                         example: Invalid or missing token
+              examples:
+                unauthorized:
+                  summary: Unauthorized
+                  value:
+                    error:
+                      code: unauthorized
+                      message: Invalid or missing token
 
     post:
       tags:
@@ -527,6 +532,13 @@ paths:
                       message:
                         type: string
                         example: Invalid or missing token
+              examples:
+                unauthorized:
+                  summary: Unauthorized
+                  value:
+                    error:
+                      code: unauthorized
+                      message: Invalid or missing token
         '422':
           description: Validation errors
           content:
@@ -584,12 +596,6 @@ paths:
                   view_count:
                     type: integer
                     example: 16
-                  average_rating:
-                    type: string
-                    example: "3.5"
-                  rating_count:
-                    type: integer
-                    example: 2
                   created_at:
                     type: string
                     format: date-time
@@ -603,8 +609,6 @@ paths:
                     body: "This is the content of my post. It can be quite long and detailed."
                     username: "alpha"
                     view_count: 16
-                    average_rating: "3.5"
-                    rating_count: 2
                     created_at: "2024-01-15T10:30:00Z"
         '401':
           description: Unauthorized - invalid or missing token
@@ -622,6 +626,13 @@ paths:
                       message:
                         type: string
                         example: Invalid or missing token
+              examples:
+                unauthorized:
+                  summary: Unauthorized
+                  value:
+                    error:
+                      code: unauthorized
+                      message: Invalid or missing token
         '404':
           description: Post not found
           content:
@@ -645,250 +656,6 @@ paths:
                     error:
                       code: not_found
                       message: Not found
-
-    patch:
-      tags:
-        - Posts
-      summary: Update a post
-      description: Updates a post (only by the post owner)
-      operationId: updatePost
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          description: Post ID
-          schema:
-            type: integer
-            example: 1
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                post:
-                  type: object
-                  properties:
-                    title:
-                      type: string
-                      minLength: 1
-                      maxLength: 100
-                      example: "Updated Post Title"
-                      description: Post title
-                    body:
-                      type: string
-                      minLength: 1
-                      maxLength: 1000
-                      example: "Updated post content with new information."
-                      description: Post content
-            examples:
-              valid_update:
-                summary: Valid post update
-                value:
-                  post:
-                    title: "Updated Post Title"
-                    body: "Updated post content with new information."
-      responses:
-        '200':
-          description: Post updated successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  user_id:
-                    type: integer
-                    example: 1
-                  title:
-                    type: string
-                    example: "Updated Post Title"
-                  body:
-                    type: string
-                    example: "Updated post content with new information."
-                  id:
-                    type: integer
-                    example: 1
-                  deleted_at:
-                    type: string
-                    nullable: true
-                    example: null
-                  view_count:
-                    type: integer
-                    example: 1
-                  metadata:
-                    type: object
-                    example: {}
-                  jsonb:
-                    type: object
-                    example: {}
-                  average_rating:
-                    type: string
-                    example: "0.0"
-                  rating_count:
-                    type: integer
-                    example: 0
-                  created_at:
-                    type: string
-                    format: date-time
-                    example: "2024-01-15T10:30:00Z"
-                  updated_at:
-                    type: string
-                    format: date-time
-                    example: "2024-01-15T10:30:13Z"
-              examples:
-                success:
-                  summary: Updated post
-                  value:
-                    user_id: 1
-                    title: "Updated Post Title"
-                    body: "Updated post content with new information."
-                    id: 1
-                    deleted_at: null
-                    view_count: 1
-                    metadata: {}
-                    jsonb: {}
-                    average_rating: "0.0"
-                    rating_count: 0
-                    created_at: "2024-01-15T10:30:00Z"
-                    updated_at: "2024-01-15T10:30:13Z"
-        '401':
-          description: Unauthorized - invalid or missing token
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: object
-                    properties:
-                      code:
-                        type: string
-                        example: unauthorized
-                      message:
-                        type: string
-                        example: Invalid or missing token
-        '403':
-          description: Forbidden - user can only update their own posts
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: object
-                    properties:
-                      code:
-                        type: string
-                        example: forbidden
-                      message:
-                        type: string
-                        example: You are not authorized to access this page.
-              examples:
-                forbidden:
-                  summary: Forbidden
-                  value:
-                    error:
-                      code: forbidden
-                      message: You are not authorized to access this page.
-        '404':
-          description: Post not found
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: object
-                    properties:
-                      code:
-                        type: string
-                        example: not_found
-                      message:
-                        type: string
-                        example: Not found
-        '422':
-          description: Validation errors
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: array
-                    items:
-                      type: string
-
-    delete:
-      tags:
-        - Posts
-      summary: Delete a post
-      description: Soft deletes a post (only by the post owner)
-      operationId: deletePost
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          description: Post ID
-          schema:
-            type: integer
-            example: 1
-      responses:
-        '204':
-          description: Post deleted successfully
-          content: {}
-        '401':
-          description: Unauthorized - invalid or missing token
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: object
-                    properties:
-                      code:
-                        type: string
-                        example: unauthorized
-                      message:
-                        type: string
-                        example: Invalid or missing token
-        '403':
-          description: Forbidden - user can only delete their own posts
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: object
-                    properties:
-                      code:
-                        type: string
-                        example: forbidden
-                      message:
-                        type: string
-                        example: You are not authorized to access this page.
-        '404':
-          description: Post not found
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: object
-                    properties:
-                      code:
-                        type: string
-                        example: not_found
-                      message:
-                        type: string
-                        example: Not found
 
   /api/v1/posts/{post_id}/rating:
     get:
@@ -1283,6 +1050,223 @@ paths:
                       message:
                         type: string
                         example: Not found
+
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Post ID
+          schema:
+            type: integer
+            example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                post:
+                  type: object
+                  properties:
+                    title:
+                      type: string
+                      minLength: 1
+                      maxLength: 100
+                      example: "Updated Post Title"
+                      description: Post title
+                    body:
+                      type: string
+                      minLength: 1
+                      maxLength: 1000
+                      example: "Updated post content with new information."
+                      description: Post content
+            examples:
+              valid_update:
+                summary: Valid post update
+                value:
+                  post:
+                    title: "Updated Post Title"
+                    body: "Updated post content with new information."
+      responses:
+        '200':
+          description: Post updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user_id:
+                    type: integer
+                    example: 1
+                  title:
+                    type: string
+                    example: "Updated Post Title"
+                  body:
+                    type: string
+                    example: "Updated post content with new information."
+                  id:
+                    type: integer
+                    example: 1
+                  deleted_at:
+                    type: string
+                    nullable: true
+                    example: null
+                  view_count:
+                    type: integer
+                    example: 1
+                  metadata:
+                    type: object
+                    example: {}
+                  jsonb:
+                    type: object
+                    example: {}
+                  average_rating:
+                    type: string
+                    example: "0.0"
+                  rating_count:
+                    type: integer
+                    example: 0
+                  created_at:
+                    type: string
+                    format: date-time
+                    example: "2024-01-15T10:30:00Z"
+                  updated_at:
+                    type: string
+                    format: date-time
+                    example: "2024-01-15T10:30:13Z"
+              examples:
+                success:
+                  summary: Updated post
+                  value:
+                    user_id: 1
+                    title: "Updated Post Title"
+                    body: "Updated post content with new information."
+                    id: 1
+                    deleted_at: null
+                    view_count: 1
+                    metadata: {}
+                    jsonb: {}
+                    average_rating: "0.0"
+                    rating_count: 0
+                    created_at: "2024-01-15T10:30:00Z"
+                    updated_at: "2024-01-15T10:30:13Z"
+        '401':
+          description: Unauthorized - invalid or missing token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: unauthorized
+                      message:
+                        type: string
+                        example: Invalid or missing token
+              examples:
+                unauthorized:
+                  summary: Unauthorized
+                  value:
+                    error:
+                      code: unauthorized
+                      message: Invalid or missing token
+        '403':
+          description: Forbidden - user can only update their own posts
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: forbidden
+                      message:
+                        type: string
+                        example: You are not authorized to access this page.
+              examples:
+                forbidden:
+                  summary: Forbidden
+                  value:
+                    error:
+                      code: forbidden
+                      message: You are not authorized to access this page.
+        '404':
+          description: Post not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Validation errors
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      tags:
+        - Posts
+      summary: Delete a post
+      description: Soft deletes a post (only by the post owner)
+      operationId: deletePost
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Post ID
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '204':
+          description: Post deleted successfully
+          content: {}
+        '401':
+          description: Unauthorized - invalid or missing token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: unauthorized
+                      message:
+                        type: string
+                        example: Invalid or missing token
+              examples:
+                unauthorized:
+                  summary: Unauthorized
+                  value:
+                    error:
+                      code: unauthorized
+                      message: Invalid or missing token
+        '403':
+          description: Forbidden - user can only delete their own posts
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Post not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
 components:
   securitySchemes:

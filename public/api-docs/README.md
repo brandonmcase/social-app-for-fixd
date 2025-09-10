@@ -30,11 +30,33 @@ Direct access to the OpenAPI spec: http://localhost:3000/api-docs/swagger.yaml
 - `GET /api/v1/auth/me` - Get current user info (requires authentication)
 
 ### Posts
-- `GET /api/v1/posts` - List all posts (requires authentication)
+- `GET /api/v1/posts` - List all active posts with pagination (requires authentication)
 - `POST /api/v1/posts` - Create a new post (requires authentication)
-- `GET /api/v1/posts/:id` - Get a specific post (requires authentication)
+- `GET /api/v1/posts/:id` - Get a specific post and increment view count (requires authentication)
 - `PATCH /api/v1/posts/:id` - Update a post (requires authentication, owner only)
-- `DELETE /api/v1/posts/:id` - Delete a post (requires authentication, owner only)
+- `DELETE /api/v1/posts/:id` - Soft delete a post (requires authentication, owner only)
+
+#### Post Features
+- **Soft Deletion**: Posts are soft deleted (deleted_at timestamp set) rather than permanently removed
+- **View Counting**: View count automatically increments when a post is accessed
+- **Authorization**: Users can only update/delete their own posts
+- **Pagination**: Post listing supports page and per_page parameters
+- **Rich Data**: Posts include metadata, jsonb fields, and rating information
+- **Rating Integration**: Posts display average_rating and rating_count from user ratings
+
+### Ratings
+- `GET /api/v1/posts/:post_id/rating` - Get user's rating for a post (requires authentication)
+- `POST /api/v1/posts/:post_id/rating` - Create a rating for a post (requires authentication)
+- `PATCH /api/v1/posts/:post_id/rating` - Update user's rating for a post (requires authentication)
+- `DELETE /api/v1/posts/:post_id/rating` - Delete user's rating for a post (requires authentication)
+
+#### Rating Features
+- **Star Rating**: 1-5 star rating system with validation
+- **User Uniqueness**: Each user can only rate a post once (database constraint)
+- **Real-time Updates**: Post statistics (average_rating, rating_count) update automatically
+- **User Isolation**: Users can only see/modify their own ratings
+- **Multi-user Support**: Multiple users can rate the same post
+- **Cached Statistics**: Post responses include aggregated rating data
 
 ## Authentication
 
