@@ -38,6 +38,21 @@ module SocialAppForFixd
 
     config.middleware.use Rack::Attack
 
+    # Configure Redis for caching
+    config.cache_store = :redis_cache_store, {
+      url: ENV.fetch('REDIS_URL', 'redis://localhost:6379/0'),
+      expires_in: 1.hour,
+      namespace: 'social_app_cache'
+    }
+
+    # Enable performance monitoring in development
+    if Rails.env.development?
+      config.after_initialize do
+        PerformanceMonitoringService.log_slow_queries(50) # Log queries > 50ms
+        PerformanceMonitoringService.log_request_performance(200) # Log requests > 200ms
+      end
+    end
+
     # Only loads a smaller set of middleware suitable for API only apps.
     # Middleware like session, flash, cookies can be added back manually.
     # Skip views, helpers and assets when generating a new resource.

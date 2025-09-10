@@ -1,7 +1,7 @@
 module Api
   module V1
     module Auth
-      class SessionsController < ApplicationController
+      class SessionsController < BaseController
         respond_to :json
         before_action :authenticate_user!, only: [ :me ]
 

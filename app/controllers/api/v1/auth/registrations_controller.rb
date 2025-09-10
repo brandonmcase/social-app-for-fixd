@@ -1,7 +1,7 @@
 module Api
   module V1
     module Auth
-      class RegistrationsController < ApplicationController
+      class RegistrationsController < BaseController
         respond_to :json
 
         def create
