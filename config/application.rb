@@ -44,7 +44,7 @@ module SocialAppForFixd
     config.api_only = true
 
     # Enable sessions for Devise JWT authentication
-    config.session_store :cookie_store, key: '_social_app_session'
+    config.session_store :cookie_store, key: "_social_app_session"
     config.middleware.use ActionDispatch::Cookies
     config.middleware.use config.session_store, config.session_options
   end

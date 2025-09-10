@@ -39,7 +39,7 @@ RSpec.describe Api::V1::Auth::RegistrationsController, type: :controller do
       it 'returns the user data' do
         post :create, params: valid_params, format: :json
         json_response = JSON.parse(response.body)
-        
+
         expect(json_response['data']).to include(
           'email' => 'test@example.com',
           'username' => 'testuser'
@@ -50,7 +50,7 @@ RSpec.describe Api::V1::Auth::RegistrationsController, type: :controller do
       it 'does not include password in response' do
         post :create, params: valid_params, format: :json
         json_response = JSON.parse(response.body)
-        
+
         expect(json_response['data']).not_to have_key('password')
         expect(json_response['data']).not_to have_key('encrypted_password')
       end
@@ -76,7 +76,7 @@ RSpec.describe Api::V1::Auth::RegistrationsController, type: :controller do
       it 'returns validation errors' do
         post :create, params: invalid_params, format: :json
         json_response = JSON.parse(response.body)
-        
+
         expect(json_response['error']).to include(
           'code' => 'validation_error',
           'message' => 'Invalid registration'
@@ -88,7 +88,7 @@ RSpec.describe Api::V1::Auth::RegistrationsController, type: :controller do
         post :create, params: invalid_params, format: :json
         json_response = JSON.parse(response.body)
         errors = json_response['error']['details']
-        
+
         expect(errors['email']).to include('is invalid')
         expect(errors['username']).to include("can't be blank")
         expect(errors['password']).to include('is too short (minimum is 8 characters)')
@@ -126,7 +126,7 @@ RSpec.describe Api::V1::Auth::RegistrationsController, type: :controller do
       it 'returns email already taken error' do
         post :create, params: duplicate_email_params, format: :json
         json_response = JSON.parse(response.body)
-        
+
         expect(json_response['error']['details']['email']).to include('has already been taken')
       end
     end
@@ -161,7 +161,7 @@ RSpec.describe Api::V1::Auth::RegistrationsController, type: :controller do
       it 'returns username already taken error' do
         post :create, params: duplicate_username_params, format: :json
         json_response = JSON.parse(response.body)
-        
+
         expect(json_response['error']['details']['username']).to include('has already been taken')
       end
     end
@@ -178,7 +178,7 @@ RSpec.describe Api::V1::Auth::RegistrationsController, type: :controller do
       it 'handles malformed JSON gracefully' do
         request.env['CONTENT_TYPE'] = 'application/json'
         request.env['RAW_POST_DATA'] = '{"user":{"email":"test@example.com"'
-        
+
         expect {
           post :create, format: :json
         }.to raise_error(ActionController::ParameterMissing)
@@ -188,7 +188,7 @@ RSpec.describe Api::V1::Auth::RegistrationsController, type: :controller do
     context 'password encryption' do
       it 'encrypts the password before saving' do
         post :create, params: valid_params, format: :json
-        
+
         user = User.last
         expect(user.encrypted_password).to be_present
         expect(user.encrypted_password).not_to eq('password123')
@@ -227,7 +227,7 @@ RSpec.describe Api::V1::Auth::RegistrationsController, type: :controller do
 
     it 'only permits allowed parameters' do
       post :create, params: params_with_extra_fields, format: :json
-      
+
       user = User.last
       expect(user.email).to eq('test@example.com')
       expect(user.username).to eq('testuser')

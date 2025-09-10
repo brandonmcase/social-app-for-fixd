@@ -10,7 +10,7 @@ class CreatePosts < ActiveRecord::Migration[8.0]
       t.jsonb :metadata, :jsonb, default: {}, null: false
       t.decimal :average_rating, precision: 3, scale: 2, default: 0.0
       t.integer :rating_count, default: 0
-      
+
 
       t.timestamps
     end

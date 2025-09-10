@@ -6,13 +6,13 @@ class Rating < ApplicationRecord
   validates :user_id, uniqueness: { scope: :post_id }
 
   # When a rating changes, update cached stats in a single transaction.
-  after_commit :refresh_post_caches, on: [:create, :update, :destroy]
+  after_commit :refresh_post_caches, on: [ :create, :update, :destroy ]
 
   private
 
   def refresh_post_caches
     return unless post.persisted?
-    
+
     post.with_lock do
       counts = post.ratings.count
       avg    = counts.zero? ? 0 : post.ratings.average(:rating).to_f.round(2)

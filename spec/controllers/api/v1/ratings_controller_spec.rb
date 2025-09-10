@@ -17,7 +17,7 @@ RSpec.describe Api::V1::RatingsController, type: :controller do
 
       it 'returns the user\'s rating' do
         get :show, params: { post_id: test_post.id }
-        
+
         expect(response).to have_http_status(:ok)
         expect(JSON.parse(response.body)).to include(
           'id' => rating.id,
@@ -31,7 +31,7 @@ RSpec.describe Api::V1::RatingsController, type: :controller do
     context 'when user has not rated the post' do
       it 'returns 404 with error message' do
         get :show, params: { post_id: test_post.id }
-        
+
         expect(response).to have_http_status(:not_found)
         expect(JSON.parse(response.body)).to eq({ 'error' => 'No rating found' })
       end
@@ -40,7 +40,7 @@ RSpec.describe Api::V1::RatingsController, type: :controller do
     context 'when post does not exist' do
       it 'returns 404' do
         get :show, params: { post_id: 99999 }
-        
+
         expect(response).to have_http_status(:not_found)
         expect(JSON.parse(response.body)).to include('error')
       end
@@ -51,7 +51,7 @@ RSpec.describe Api::V1::RatingsController, type: :controller do
 
       it 'returns 401 unauthorized' do
         get :show, params: { post_id: test_post.id }
-        
+
         expect(response).to have_http_status(:unauthorized)
         expect(JSON.parse(response.body)).to include('error')
       end
@@ -71,7 +71,7 @@ RSpec.describe Api::V1::RatingsController, type: :controller do
         expect {
           post :create, params: valid_params
         }.to change(Rating, :count).by(1)
-        
+
         expect(response).to have_http_status(:created)
         rating = JSON.parse(response.body)
         expect(rating).to include(
@@ -83,7 +83,7 @@ RSpec.describe Api::V1::RatingsController, type: :controller do
 
       it 'updates post cached statistics' do
         post :create, params: valid_params
-        
+
         test_post.reload
         expect(test_post.average_rating).to eq(4.0)
         expect(test_post.rating_count).to eq(1)
@@ -91,7 +91,7 @@ RSpec.describe Api::V1::RatingsController, type: :controller do
 
       it 'associates rating with current user' do
         post :create, params: valid_params
-        
+
         rating = Rating.last
         expect(rating.user).to eq(user)
         expect(rating.post).to eq(test_post)
@@ -108,7 +108,7 @@ RSpec.describe Api::V1::RatingsController, type: :controller do
 
       it 'returns 422 with validation errors' do
         post :create, params: invalid_params
-        
+
         expect(response).to have_http_status(:unprocessable_content)
         expect(JSON.parse(response.body)).to include('error')
       end
@@ -119,7 +119,7 @@ RSpec.describe Api::V1::RatingsController, type: :controller do
 
       it 'returns 422 with validation errors' do
         post :create, params: valid_params
-        
+
         expect(response).to have_http_status(:unprocessable_content)
         expect(JSON.parse(response.body)).to include('error')
       end
@@ -135,7 +135,7 @@ RSpec.describe Api::V1::RatingsController, type: :controller do
 
       it 'returns 404' do
         post :create, params: invalid_params
-        
+
         expect(response).to have_http_status(:not_found)
         expect(JSON.parse(response.body)).to include('error')
       end
@@ -146,7 +146,7 @@ RSpec.describe Api::V1::RatingsController, type: :controller do
 
       it 'returns 401 unauthorized' do
         post :create, params: valid_params
-        
+
         expect(response).to have_http_status(:unauthorized)
         expect(JSON.parse(response.body)).to include('error')
       end
@@ -165,11 +165,11 @@ RSpec.describe Api::V1::RatingsController, type: :controller do
     context 'with valid parameters' do
       it 'updates the rating' do
         patch :update, params: update_params
-        
+
         expect(response).to have_http_status(:ok)
         rating.reload
         expect(rating.rating).to eq(5)
-        
+
         response_data = JSON.parse(response.body)
         expect(response_data).to include(
           'id' => rating.id,
@@ -181,7 +181,7 @@ RSpec.describe Api::V1::RatingsController, type: :controller do
 
       it 'updates post cached statistics' do
         patch :update, params: update_params
-        
+
         test_post.reload
         expect(test_post.average_rating).to eq(5.0)
         expect(test_post.rating_count).to eq(1)
@@ -198,7 +198,7 @@ RSpec.describe Api::V1::RatingsController, type: :controller do
 
       it 'returns 422 with validation errors' do
         patch :update, params: invalid_params
-        
+
         expect(response).to have_http_status(:unprocessable_content)
         expect(JSON.parse(response.body)).to include('error')
       end
@@ -216,7 +216,7 @@ RSpec.describe Api::V1::RatingsController, type: :controller do
 
       it 'returns 404' do
         patch :update, params: non_existent_params
-        
+
         expect(response).to have_http_status(:not_found)
         expect(JSON.parse(response.body)).to include('error')
       end
@@ -232,7 +232,7 @@ RSpec.describe Api::V1::RatingsController, type: :controller do
 
       it 'returns 404' do
         patch :update, params: invalid_params
-        
+
         expect(response).to have_http_status(:not_found)
         expect(JSON.parse(response.body)).to include('error')
       end
@@ -243,7 +243,7 @@ RSpec.describe Api::V1::RatingsController, type: :controller do
 
       it 'returns 401 unauthorized' do
         patch :update, params: update_params
-        
+
         expect(response).to have_http_status(:unauthorized)
         expect(JSON.parse(response.body)).to include('error')
       end
@@ -258,14 +258,14 @@ RSpec.describe Api::V1::RatingsController, type: :controller do
         expect {
           delete :destroy, params: { post_id: test_post.id }
         }.to change(Rating, :count).by(-1)
-        
+
         expect(response).to have_http_status(:no_content)
         expect(response.body).to be_empty
       end
 
       it 'updates post cached statistics' do
         delete :destroy, params: { post_id: test_post.id }
-        
+
         test_post.reload
         expect(test_post.average_rating).to eq(0.0)
         expect(test_post.rating_count).to eq(0)
@@ -277,7 +277,7 @@ RSpec.describe Api::V1::RatingsController, type: :controller do
 
       it 'returns 404' do
         delete :destroy, params: { post_id: test_post.id }
-        
+
         expect(response).to have_http_status(:not_found)
         expect(JSON.parse(response.body)).to include('error')
       end
@@ -286,7 +286,7 @@ RSpec.describe Api::V1::RatingsController, type: :controller do
     context 'when post does not exist' do
       it 'returns 404' do
         delete :destroy, params: { post_id: 99999 }
-        
+
         expect(response).to have_http_status(:not_found)
         expect(JSON.parse(response.body)).to include('error')
       end
@@ -297,7 +297,7 @@ RSpec.describe Api::V1::RatingsController, type: :controller do
 
       it 'returns 401 unauthorized' do
         delete :destroy, params: { post_id: test_post.id }
-        
+
         expect(response).to have_http_status(:unauthorized)
         expect(JSON.parse(response.body)).to include('error')
       end
@@ -341,7 +341,7 @@ RSpec.describe Api::V1::RatingsController, type: :controller do
 
       it 'returns 404 for soft-deleted posts' do
         get :show, params: { post_id: deleted_post.id }
-        
+
         expect(response).to have_http_status(:not_found)
       end
     end
@@ -349,7 +349,7 @@ RSpec.describe Api::V1::RatingsController, type: :controller do
     context 'with missing rating parameter' do
       it 'returns 422 for missing rating' do
         post :create, params: { post_id: test_post.id }
-        
+
         expect(response).to have_http_status(:unprocessable_content)
       end
     end

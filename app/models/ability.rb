@@ -17,8 +17,7 @@ class Ability
     can :read, Post, deleted_at: nil
 
     # Ratings: authorizations tied to the user/post
-    can [:show, :create], Rating
-    can [:update, :destroy], Rating, user_id: user.id
-
+    can [ :show, :create ], Rating
+    can [ :update, :destroy ], Rating, user_id: user.id
   end
 end

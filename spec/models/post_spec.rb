@@ -13,7 +13,7 @@ RSpec.describe Post, type: :model do
     it 'destroys associated ratings when deleted' do
       post = create(:post)
       rating = create(:rating, post: post)
-      
+
       expect {
         post.destroy
       }.to change(Rating, :count).by(-1)
@@ -139,7 +139,7 @@ RSpec.describe Post, type: :model do
       it 'can have multiple ratings' do
         create(:rating, post: post, user: user1, rating: 4)
         create(:rating, post: post, user: user2, rating: 5)
-        
+
         expect(post.ratings.count).to eq(2)
         expect(post.ratings.pluck(:rating)).to contain_exactly(4, 5)
       end
@@ -147,7 +147,7 @@ RSpec.describe Post, type: :model do
       it 'calculates average rating correctly' do
         create(:rating, post: post, user: user1, rating: 3)
         create(:rating, post: post, user: user2, rating: 5)
-        
+
         post.reload
         expect(post.average_rating).to eq(4.0)
       end
@@ -155,7 +155,7 @@ RSpec.describe Post, type: :model do
       it 'tracks rating count correctly' do
         create(:rating, post: post, user: user1, rating: 4)
         create(:rating, post: post, user: user2, rating: 5)
-        
+
         post.reload
         expect(post.rating_count).to eq(2)
       end
@@ -168,7 +168,7 @@ RSpec.describe Post, type: :model do
       it 'updates cached statistics when ratings change' do
         rating1 = create(:rating, post: post, user: user1, rating: 3)
         rating2 = create(:rating, post: post, user: user2, rating: 5)
-        
+
         post.reload
         expect(post.average_rating).to eq(4.0)
         expect(post.rating_count).to eq(2)
@@ -191,14 +191,14 @@ RSpec.describe Post, type: :model do
       it 'rounds average rating to 2 decimal places' do
         create(:rating, post: post, user: user1, rating: 3)
         create(:rating, post: post, user: user2, rating: 4)
-        
+
         post.reload
         expect(post.average_rating).to eq(3.5)
       end
 
       it 'handles single rating correctly' do
         create(:rating, post: post, user: user1, rating: 4)
-        
+
         post.reload
         expect(post.average_rating).to eq(4.0)
         expect(post.rating_count).to eq(1)

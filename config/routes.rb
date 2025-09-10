@@ -1,24 +1,23 @@
 Rails.application.routes.draw do
-  get "/up", to: proc { [200, { "Content-Type" => "application/json" },
-                        [ { status: "ok" }.to_json ]] }
+  get "/up", to: proc { [ 200, { "Content-Type" => "application/json" },
+                        [ { status: "ok" }.to_json ] ] }
 
   # API Documentation
   get "/api-docs", to: redirect("/api-docs/")
-  get "/api-docs/", to: proc { |env| 
-    [200, { "Content-Type" => "text/html" }, [File.read(Rails.root.join("public", "api-docs", "index.html"))]]
+  get "/api-docs/", to: proc { |env|
+    [ 200, { "Content-Type" => "text/html" }, [ File.read(Rails.root.join("public", "api-docs", "index.html")) ] ]
   }
 
   namespace :api, defaults: { format: :json } do
     namespace :v1 do
-
-      resources :posts, except: [:new, :edit] do
-        resource :rating, only: [:show, :create, :update, :destroy]
+      resources :posts, except: [ :new, :edit ] do
+        resource :rating, only: [ :show, :create, :update, :destroy ]
       end
       # This line creates the Devise mapping for :user (REQUIRED)
       devise_for :users,
                  path: "auth",
                  defaults: { format: :json },
-                 skip: [:passwords, :confirmations],
+                 skip: [ :passwords, :confirmations ],
                  controllers: {
                    sessions:      "api/v1/auth/sessions",
                    registrations: "api/v1/auth/registrations"

@@ -2,7 +2,7 @@ module Api
   module V1
     class RatingsController < BaseController
       before_action :set_post
-      before_action :set_rating, only: [:show, :update, :destroy]
+      before_action :set_rating, only: [ :show, :update, :destroy ]
 
       # GET /api/v1/posts/:post_id/rating
       def show
@@ -16,14 +16,14 @@ module Api
       # POST /api/v1/posts/:post_id/rating
       def create
         @rating = @post.ratings.build(rating_params.merge(user: current_user))
-        
+
         if @rating.save
           render json: @rating, status: :created
         else
           render json: { error: @rating.errors.full_messages }, status: :unprocessable_content
         end
       rescue ActionController::ParameterMissing
-        render json: { error: ["Rating parameter is required"] }, status: :unprocessable_content
+        render json: { error: [ "Rating parameter is required" ] }, status: :unprocessable_content
       end
 
       # PATCH/PUT /api/v1/posts/:post_id/rating
@@ -50,7 +50,9 @@ module Api
       private
 
       def set_post
-        @post = Post.find(params[:post_id])
+        @post = Post.active.find(params[:post_id])
+      rescue ActiveRecord::RecordNotFound
+        render json: { error: { code: "not_found", message: "Post not found" } }, status: :not_found
       end
 
       def set_rating

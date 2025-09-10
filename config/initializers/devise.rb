@@ -6,7 +6,7 @@ Devise.setup do |config|
 
   # API-only
   config.navigational_formats = []
-  config.skip_session_storage = [:http_auth, :params_auth]
+  config.skip_session_storage = [ :http_auth, :params_auth ]
 
   config.password_length = 8..128
   config.email_regexp = /\A[^@\s]+@[^@\s]+\z/

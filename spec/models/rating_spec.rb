@@ -8,8 +8,8 @@ RSpec.describe Rating, type: :model do
 
   describe 'validations' do
     subject { build(:rating) }
-    
-    it { should validate_inclusion_of(:rating).in_array([1, 2, 3, 4, 5]) }
+
+    it { should validate_inclusion_of(:rating).in_array([ 1, 2, 3, 4, 5 ]) }
     it { should validate_uniqueness_of(:user_id).scoped_to(:post_id) }
   end
 
@@ -109,7 +109,7 @@ RSpec.describe Rating, type: :model do
 
     it 'prevents duplicate ratings from same user for same post' do
       create(:rating, user: user, post: post, rating: 4)
-      
+
       expect {
         create(:rating, user: user, post: post, rating: 5)
       }.to raise_error(ActiveRecord::RecordInvalid, /User has already been taken/)
@@ -117,7 +117,7 @@ RSpec.describe Rating, type: :model do
 
     it 'allows different users to rate the same post' do
       user2 = create(:user)
-      
+
       expect {
         create(:rating, user: user, post: post, rating: 4)
         create(:rating, user: user2, post: post, rating: 5)
@@ -130,14 +130,14 @@ RSpec.describe Rating, type: :model do
     let(:post) { create(:post, user: user) }
 
     it 'accepts valid rating values' do
-      [1, 2, 3, 4, 5].each do |rating_value|
+      [ 1, 2, 3, 4, 5 ].each do |rating_value|
         rating = build(:rating, user: user, post: post, rating: rating_value)
         expect(rating).to be_valid
       end
     end
 
     it 'rejects invalid rating values' do
-      [0, 6, -1, 10].each do |invalid_rating|
+      [ 0, 6, -1, 10 ].each do |invalid_rating|
         rating = build(:rating, user: user, post: post, rating: invalid_rating)
         expect(rating).not_to be_valid
         expect(rating.errors[:rating]).to include('is not included in the list')

@@ -19,7 +19,7 @@ RSpec.describe Api::V1::PostsController, type: :controller do
     it 'returns all active posts' do
       get :index
       expect(response).to have_http_status(:ok)
-      
+
       json_response = JSON.parse(response.body)
       expect(json_response.length).to eq(3)
     end
@@ -41,13 +41,13 @@ RSpec.describe Api::V1::PostsController, type: :controller do
       # Add ratings to posts
       create(:rating, post: posts.first, user: user, rating: 4)
       create(:rating, post: posts.first, user: other_user, rating: 5)
-      
+
       get :index
       json_response = JSON.parse(response.body)
-      
+
       # Find the post with ratings in the response
       rated_post = json_response.find { |p| p['id'] == posts.first.id }
-      
+
       expect(rated_post).to include('average_rating', 'rating_count')
       expect(rated_post['average_rating']).to eq('4.5')
       expect(rated_post['rating_count']).to eq(2)
@@ -71,7 +71,7 @@ RSpec.describe Api::V1::PostsController, type: :controller do
     it 'returns the post' do
       get :show, params: { id: user_post.id }
       expect(response).to have_http_status(:ok)
-      
+
       json_response = JSON.parse(response.body)
       expect(json_response['id']).to eq(user_post.id)
       expect(json_response['title']).to eq(user_post.title)
@@ -88,13 +88,13 @@ RSpec.describe Api::V1::PostsController, type: :controller do
       # Add ratings to the post
       create(:rating, post: user_post, user: user, rating: 4)
       create(:rating, post: user_post, user: other_user, rating: 5)
-      
+
       # Reload the post to get updated cached statistics
       user_post.reload
-      
+
       get :show, params: { id: user_post.id }
       json_response = JSON.parse(response.body)
-      
+
       expect(json_response).to include('average_rating', 'rating_count')
       expect(json_response['average_rating']).to eq('4.5')
       expect(json_response['rating_count']).to eq(2)
@@ -297,7 +297,7 @@ RSpec.describe Api::V1::PostsController, type: :controller do
 
   describe 'DELETE #destroy' do
     let!(:user_post) { create(:post, user: user) }
-    
+
     it 'soft deletes the post' do
       delete :destroy, params: { id: user_post.id }
       user_post.reload
@@ -337,7 +337,7 @@ RSpec.describe Api::V1::PostsController, type: :controller do
 
     it 'requires authentication for all actions' do
       expect(controller).to receive(:authenticate_user!).exactly(5).times
-      
+
       get :index
       get :show, params: { id: user_post.id }
       post :create, params: { post: { title: 'Test', body: 'Test' } }

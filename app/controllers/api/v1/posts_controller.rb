@@ -12,8 +12,8 @@ module Api
                     .per(params[:per_page] || 20)
 
         render json: posts.as_json(
-          only: [:id, :title, :body, :view_count, :average_rating, :rating_count, :created_at],
-          methods: [:username]
+          only: [ :id, :title, :body, :view_count, :average_rating, :rating_count, :created_at ],
+          methods: [ :username ]
         )
       end
 
@@ -22,8 +22,8 @@ module Api
         post = Post.active.find(params[:id])
         post.increment!(:view_count)
         render json: post.as_json(
-          only: [:id, :title, :body, :view_count, :average_rating, :rating_count, :created_at],
-          methods: [:username]
+          only: [ :id, :title, :body, :view_count, :average_rating, :rating_count, :created_at ],
+          methods: [ :username ]
         )
       end
 
@@ -51,7 +51,7 @@ module Api
       def destroy
         post = current_user.posts.find(params[:id])
         post.update(deleted_at: Time.current)
-        head :no_content
+        render_no_content
       end
 
       private
