@@ -78,6 +78,7 @@ RSpec.describe 'API::V1::Posts', type: :request do
       it 'increments view count' do
         expect {
           get "/api/v1/posts/#{post.id}", headers: headers
+          perform_enqueued_jobs
         }.to change { post.reload.view_count }.by(1)
       end
     end

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_09_10_030615) do
+ActiveRecord::Schema[8.0].define(version: 2025_09_11_001259) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -34,6 +34,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_10_030615) do
     t.integer "rating_count", default: 0
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "lock_version", default: 0, null: false
     t.index "((metadata ->> 'category'::text))", name: "index_posts_on_metadata_category"
     t.index "((metadata ->> 'language'::text))", name: "index_posts_on_metadata_language"
     t.index "((metadata ->> 'source'::text))", name: "index_posts_on_metadata_source"

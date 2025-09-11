@@ -45,6 +45,12 @@ module SocialAppForFixd
       namespace: "social_app_cache"
     }
 
+    # Configure Redis URL for Sidekiq
+    config.redis_url = ENV.fetch("REDIS_URL", "redis://localhost:6379/0")
+
+    # Configure Active Job to use Sidekiq
+    config.active_job.queue_adapter = :sidekiq
+
     # Enable performance monitoring in development
     if Rails.env.development?
       config.after_initialize do

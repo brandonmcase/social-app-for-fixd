@@ -15,16 +15,20 @@ module Api
 
       # POST /api/v1/posts/:post_id/rating
       def create
-        ActiveRecord::Base.transaction do
-          @rating = @post.ratings.build(rating_params.merge(user: current_user))
+        DistributedLockService.with_rating_lock(@post.id, current_user.id) do
+          ActiveRecord::Base.transaction do
+            @rating = @post.ratings.build(rating_params.merge(user: current_user))
 
-          if @rating.save
-            render json: @rating, status: :created
-          else
-            render json: { error: @rating.errors.full_messages }, status: :unprocessable_content
-            raise ActiveRecord::Rollback
+            if @rating.save
+              render json: @rating, status: :created
+            else
+              render json: { error: @rating.errors.full_messages }, status: :unprocessable_content
+              raise ActiveRecord::Rollback
+            end
           end
         end
+      rescue DistributedLockService::LockTimeout
+        render json: { error: { code: "timeout", message: "Request timed out. Please try again." } }, status: :request_timeout
       rescue ActionController::ParameterMissing
         render json: { error: [ "Rating parameter is required" ] }, status: :unprocessable_content
       end
@@ -34,15 +38,19 @@ module Api
         if @rating.nil?
           render json: { error: { code: "not_found", message: "Not found" } }, status: :not_found
         else
-          ActiveRecord::Base.transaction do
-            if @rating.update(rating_params)
-              render json: @rating
-            else
-              render json: { error: @rating.errors.full_messages }, status: :unprocessable_content
-              raise ActiveRecord::Rollback
+          DistributedLockService.with_rating_lock(@post.id, current_user.id) do
+            ActiveRecord::Base.transaction do
+              if @rating.update(rating_params)
+                render json: @rating
+              else
+                render json: { error: @rating.errors.full_messages }, status: :unprocessable_content
+                raise ActiveRecord::Rollback
+              end
             end
           end
         end
+      rescue DistributedLockService::LockTimeout
+        render json: { error: { code: "timeout", message: "Request timed out. Please try again." } }, status: :request_timeout
       end
 
       # DELETE /api/v1/posts/:post_id/rating
@@ -50,11 +58,15 @@ module Api
         if @rating.nil?
           render json: { error: { code: "not_found", message: "Not found" } }, status: :not_found
         else
-          ActiveRecord::Base.transaction do
-            @rating.destroy
-            head :no_content
+          DistributedLockService.with_rating_lock(@post.id, current_user.id) do
+            ActiveRecord::Base.transaction do
+              @rating.destroy
+              head :no_content
+            end
           end
         end
+      rescue DistributedLockService::LockTimeout
+        render json: { error: { code: "timeout", message: "Request timed out. Please try again." } }, status: :request_timeout
       end
 
       private

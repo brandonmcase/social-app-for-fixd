@@ -7,6 +7,9 @@ class Post < ApplicationRecord
 
   scope :active, -> { where(deleted_at: nil) }
 
+  # Enable optimistic locking
+  self.locking_column = :lock_version
+
   def username
     user.username
   end

@@ -103,6 +103,7 @@ RSpec.describe Api::V1::PostsController, type: :controller do
     it 'increments view count' do
       expect {
         get :show, params: { id: user_post.id }
+        perform_enqueued_jobs
       }.to change { user_post.reload.view_count }.by(1)
     end
 

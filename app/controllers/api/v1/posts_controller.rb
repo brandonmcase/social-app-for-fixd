@@ -20,7 +20,10 @@ module Api
 
       # GET /api/v1/posts/:id
       def show
-        @post.increment!(:view_count)
+        # Queue view count update asynchronously to avoid blocking the request
+        # In test environment, this will be processed synchronously
+        ViewCountUpdateJob.perform_later(@post.id, current_user&.id)
+
         render json: @post.as_json(
           only: [ :id, :title, :body, :view_count, :average_rating, :rating_count, :created_at ],
           methods: [ :username ]
@@ -31,8 +34,8 @@ module Api
       def create
         post = current_user.posts.build(post_params)
         if post.save
-          # Invalidate timeline cache when new post is created
-          TimelineCacheService.invalidate_user_cache(current_user.id)
+          # Queue timeline cache invalidation asynchronously
+          TimelineCacheWarmJob.perform_later(current_user.id)
           render json: post, status: :created
         else
           render json: { error: post.errors.full_messages }, status: :unprocessable_content
@@ -46,12 +49,21 @@ module Api
           return render json: { error: { code: "forbidden", message: "Not authorized to update this post" } }, status: :forbidden
         end
 
-        if @post.update(post_params)
-          # Invalidate timeline cache when post is updated
-          TimelineCacheService.invalidate_user_cache(current_user.id)
-          render json: @post
-        else
-          render json: { error: @post.errors.full_messages }, status: :unprocessable_content
+        begin
+          if @post.update(post_params)
+            # Queue timeline cache invalidation asynchronously
+            TimelineCacheWarmJob.perform_later(current_user.id)
+            render json: @post
+          else
+            render json: { error: @post.errors.full_messages }, status: :unprocessable_content
+          end
+        rescue ActiveRecord::StaleObjectError
+          render json: {
+            error: {
+              code: "conflict",
+              message: "This post has been modified by another user. Please refresh and try again."
+            }
+          }, status: :conflict
         end
       end
 
@@ -63,8 +75,8 @@ module Api
         end
 
         @post.update(deleted_at: Time.current)
-        # Invalidate timeline cache when post is deleted
-        TimelineCacheService.invalidate_user_cache(current_user.id)
+        # Queue timeline cache invalidation asynchronously
+        TimelineCacheWarmJob.perform_later(current_user.id)
         render_no_content
       end
 

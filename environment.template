@@ -1,0 +1,38 @@
+# Environment Configuration Template
+# Copy this file to .env and update the values as needed
+
+# Rails Environment Configuration
+RAILS_ENV=development
+RAILS_MAX_THREADS=5
+
+# Database Configuration
+DATABASE_URL=postgresql://localhost/social_app_for_fixd_development
+DB_MAX_CONNECTIONS=20
+
+# Redis Configuration
+REDIS_URL=redis://localhost:6379/0
+
+# Puma Server Configuration
+WEB_CONCURRENCY=2
+PORT=3000
+
+# Sidekiq Configuration
+SIDEKIQ_CONCURRENCY=5
+
+# Application Configuration
+SECRET_KEY_BASE=your_secret_key_base_here
+
+# Optional: Performance Monitoring
+ENABLE_PERFORMANCE_MONITORING=true
+SLOW_QUERY_THRESHOLD_MS=50
+SLOW_REQUEST_THRESHOLD_MS=200
+
+# Optional: Cache Configuration
+CACHE_TTL_HOURS=1
+
+# Optional: Rate Limiting
+RACK_ATTACK_ENABLED=true
+
+# Optional: Sidekiq Web UI (Development)
+SIDEKIQ_WEB_USERNAME=admin
+SIDEKIQ_WEB_PASSWORD=password

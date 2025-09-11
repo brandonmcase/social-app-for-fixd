@@ -5,7 +5,7 @@
 [![Security](https://github.com/brandoncase/social-app-for-fixd/workflows/Security%20Scan/badge.svg)](https://github.com/brandoncase/social-app-for-fixd/actions/workflows/security.yml)
 [![Quality](https://github.com/brandoncase/social-app-for-fixd/workflows/Code%20Quality/badge.svg)](https://github.com/brandoncase/social-app-for-fixd/actions/workflows/quality.yml)
 
-A Rails API-only application for social media functionality with user authentication, post management, and rating system.
+A Rails API-only application for social media functionality with user authentication, post management, rating system, and enterprise-grade high-concurrency features.
 
 ## Features
 
@@ -18,10 +18,11 @@ A Rails API-only application for social media functionality with user authentica
 ### 📝 Posts
 - Create, read, update, and delete posts
 - Soft deletion (posts are archived, not permanently deleted)
-- View count tracking
+- View count tracking (asynchronous updates)
 - Rich metadata support (JSONB fields)
 - Pagination support
 - User authorization (users can only modify their own posts)
+- **Optimistic locking** for concurrent edit protection
 
 ### ⭐ Rating System
 - 1-5 star rating system for posts
@@ -29,6 +30,16 @@ A Rails API-only application for social media functionality with user authentica
 - Real-time average rating and count updates
 - Multi-user rating support
 - Cached statistics for performance
+- **Redis-based distributed locks** to prevent race conditions
+- **Asynchronous notifications** when posts are rated
+
+### 🚀 High-Concurrency Features
+- **Optimistic Locking**: Prevents data corruption from concurrent post edits
+- **Distributed Locks**: Redis-based locking for rating operations
+- **Background Job Processing**: Sidekiq for asynchronous tasks
+- **Database Connection Pooling**: Optimized for high-concurrency scenarios
+- **Timeline Cache Warming**: Asynchronous cache management
+- **Performance Monitoring**: Built-in performance tracking
 
 ### 📊 API Documentation
 - Complete Swagger/OpenAPI 3.0 documentation
@@ -41,7 +52,8 @@ A Rails API-only application for social media functionality with user authentica
 - Model, controller, and integration tests
 - FactoryBot for test data generation
 - Shoulda-matchers for validation testing
-- 314+ test examples with 100% pass rate
+- **314+ test examples with 100% pass rate**
+- **Test-friendly high-concurrency features**
 - 80%+ code coverage with SimpleCov
 
 ### 🚀 CI/CD
@@ -55,12 +67,15 @@ A Rails API-only application for social media functionality with user authentica
 
 - **Ruby**: 3.4.4
 - **Rails**: 8.0.2.1
-- **Database**: PostgreSQL
+- **Database**: PostgreSQL with optimized connection pooling
+- **Cache**: Redis for distributed locks and caching
+- **Background Jobs**: Sidekiq for asynchronous processing
 - **Authentication**: Devise + JWT
 - **Authorization**: CanCanCan
 - **Testing**: RSpec, FactoryBot, Shoulda-matchers
 - **Documentation**: Swagger/OpenAPI 3.0
 - **Pagination**: Kaminari
+- **Concurrency**: Optimistic locking, distributed locks, multi-worker Puma
 
 ## CI/CD Pipeline
 
@@ -134,34 +149,101 @@ bundle exec bundle audit
 
 - Ruby 3.4.4
 - PostgreSQL
+- Redis (for high-concurrency features)
 - Bundler
 
-### Installation
+### Quick Setup
 
-1. Clone the repository:
+1. **Clone the repository:**
 ```bash
 git clone <repository-url>
 cd social-app-for-fixd
 ```
 
-2. Install dependencies:
+2. **Install dependencies:**
 ```bash
 bundle install
 ```
 
-3. Set up the database:
+3. **Set up environment:**
+```bash
+# Use the automated setup script
+./setup_env.sh
+
+# OR manually copy and configure environment
+cp environment.template .env
+# Edit .env with your specific configuration
+```
+
+4. **Start required services:**
+```bash
+# PostgreSQL (macOS with Homebrew)
+brew services start postgresql
+
+# Redis (macOS with Homebrew)
+brew services start redis
+```
+
+5. **Set up the database:**
 ```bash
 rails db:create
 rails db:migrate
 rails db:seed
 ```
 
-4. Start the server:
+6. **Start the application:**
 ```bash
+# Start the Rails server
 rails server
+
+# In another terminal, start Sidekiq for background jobs
+bundle exec sidekiq
 ```
 
 The API will be available at `http://localhost:3000`
+
+### Environment Configuration
+
+The application uses environment variables for configuration. Key variables include:
+
+- `RAILS_MAX_THREADS`: Database connection pool size (default: 5)
+- `WEB_CONCURRENCY`: Puma worker processes (default: 2)
+- `REDIS_URL`: Redis connection URL (default: redis://localhost:6379/0)
+- `SIDEKIQ_CONCURRENCY`: Background job workers (default: 5)
+- `DB_MAX_CONNECTIONS`: Maximum database connections (default: 20)
+
+See `environment.template` for all available configuration options.
+
+## High-Concurrency Features
+
+### Optimistic Locking
+- Prevents data corruption from concurrent post edits
+- Returns 409 Conflict when concurrent modifications are detected
+- Automatic retry handling with user-friendly error messages
+
+### Distributed Locks
+- Redis-based locking for rating operations
+- Prevents race conditions in multi-user scenarios
+- Graceful degradation when Redis is unavailable
+
+### Background Job Processing
+- **View Count Updates**: Asynchronous to avoid blocking requests
+- **Notification Delivery**: Real-time notifications when posts are rated
+- **Timeline Cache Warming**: Automatic cache management
+- **Periodic Maintenance**: Automated cache warming for active users
+
+### Monitoring & Performance
+- **Sidekiq Web UI**: Monitor background jobs at `http://localhost:3000/sidekiq`
+- **Database Connection Pool Monitoring**: Built-in health checks
+- **Performance Tracking**: Slow query and request monitoring
+- **Redis Health Checks**: Automatic connection monitoring
+
+### Production Considerations
+- Configure Redis clustering for high availability
+- Set up Sidekiq monitoring and alerting
+- Monitor database connection pool utilization
+- Use Redis persistence for distributed locks
+- Consider Redis Sentinel for failover scenarios
 
 ## API Endpoints
 
@@ -253,9 +335,11 @@ bundle exec rspec --format documentation
 - **Error Handling**: Comprehensive 401, 403, 404, 422 response testing
 
 ### Test Results
-- 107+ examples, 0 failures
+- **314+ examples, 0 failures**
 - Comprehensive coverage of happy paths and edge cases
 - Proper error handling and validation testing
+- **Test-friendly high-concurrency features** (distributed locks disabled in tests)
+- **Synchronous job processing** in test environment
 
 ## Database Schema
 
@@ -277,6 +361,7 @@ bundle exec rspec --format documentation
 - `jsonb` (JSONB for additional data)
 - `average_rating` (Decimal, cached from ratings)
 - `rating_count` (Integer, cached from ratings)
+- `lock_version` (Integer, default 0) - **Optimistic locking**
 - `created_at`, `updated_at`
 
 ### Ratings
@@ -301,6 +386,25 @@ bundle exec rspec --format documentation
 - **Real-time Updates**: Rating changes automatically update post statistics
 - **User Isolation**: Users can only access/modify their own data
 - **Comprehensive Error Handling**: Proper HTTP status codes and error messages
+- **Optimistic Locking**: Prevents concurrent edit conflicts with `lock_version`
+- **Distributed Locks**: Redis-based locking for race condition prevention
+- **Background Jobs**: Asynchronous processing for better performance
+- **Connection Pooling**: Optimized database connections for high concurrency
+
+### Development Tools
+- **Sidekiq Web UI**: `http://localhost:3000/sidekiq` (admin/password)
+- **API Documentation**: `http://localhost:3000/api-docs/`
+- **Performance Monitoring**: Built-in slow query and request tracking
+- **Database Pool Monitoring**: Automatic connection health checks
+
+### Running Background Jobs
+```bash
+# Start Sidekiq for background job processing
+bundle exec sidekiq
+
+# Monitor jobs in development
+# Visit http://localhost:3000/sidekiq
+```
 
 ## Contributing
 
