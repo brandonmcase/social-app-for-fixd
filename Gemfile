@@ -78,6 +78,8 @@ group :development, :test do
 
   # Environment variables
   gem "dotenv-rails"
+
+  gem "faker"
 end
 
 group :development do

@@ -18,7 +18,7 @@ class SearchService
   def fetch
     Rails.cache.fetch(cache_key, expires_in: CACHE_TTL) do
       scope = Post.active
-      scope = scope.where("avg_rating >= ?", @min_rating) if @min_rating.present?
+      scope = scope.where("average_rating >= ?", @min_rating) if @min_rating.present?
 
       # Full-text search using weighted tsvector + ranking
       posts = scope
@@ -62,8 +62,8 @@ class SearchService
       body: p.body,
       created_at: p.created_at,
       view_count: p.view_count,
-      avg_rating: p.avg_rating.to_f,
-      ratings_count: p.ratings_count,
+      avg_rating: p.average_rating.to_f,
+      rating_count: p.rating_count,
       author: {
         id: p.user_id,
         username: p.user.username

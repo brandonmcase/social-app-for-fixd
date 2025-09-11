@@ -10,12 +10,14 @@ A Rails API-only application for social media functionality with user authentica
 ## Features
 
 ### 🔐 Authentication
+
 - User registration and login
 - JWT token-based authentication
 - Password validation and security
 - User profile management
 
 ### 📝 Posts
+
 - Create, read, update, and delete posts
 - Soft deletion (posts are archived, not permanently deleted)
 - View count tracking (asynchronous updates)
@@ -25,6 +27,7 @@ A Rails API-only application for social media functionality with user authentica
 - **Optimistic locking** for concurrent edit protection
 
 ### ⭐ Rating System
+
 - 1-5 star rating system for posts
 - One rating per user per post (uniqueness constraint)
 - Real-time average rating and count updates
@@ -34,6 +37,7 @@ A Rails API-only application for social media functionality with user authentica
 - **Asynchronous notifications** when posts are rated
 
 ### 🚀 High-Concurrency Features
+
 - **Optimistic Locking**: Prevents data corruption from concurrent post edits
 - **Distributed Locks**: Redis-based locking for rating operations
 - **Background Job Processing**: Sidekiq for asynchronous tasks
@@ -42,12 +46,14 @@ A Rails API-only application for social media functionality with user authentica
 - **Performance Monitoring**: Built-in performance tracking
 
 ### 📊 API Documentation
+
 - Complete Swagger/OpenAPI 3.0 documentation
 - Interactive API testing interface
 - Comprehensive endpoint documentation
 - Request/response examples
 
 ### 🧪 Testing
+
 - Comprehensive RSpec test suite
 - Model, controller, and integration tests
 - FactoryBot for test data generation
@@ -57,6 +63,7 @@ A Rails API-only application for social media functionality with user authentica
 - 80%+ code coverage with SimpleCov
 
 ### 🚀 CI/CD
+
 - GitHub Actions workflows for automated testing
 - Code quality checks with RuboCop
 - Security scanning with Brakeman and Bundle Audit
@@ -84,6 +91,7 @@ This project uses GitHub Actions for continuous integration and deployment. The 
 ### Workflows
 
 1. **CI Workflow** (`.github/workflows/ci.yml`)
+
    - Runs on push and pull requests to main/develop branches
    - Sets up PostgreSQL and Redis services
    - Runs RuboCop for code style checking
@@ -93,11 +101,13 @@ This project uses GitHub Actions for continuous integration and deployment. The 
    - Uploads coverage data to Codecov
 
 2. **Test Workflow** (`.github/workflows/test.yml`)
+
    - Simplified test runner for quick feedback
    - Runs RSpec tests with and without coverage
    - Uploads coverage reports as artifacts
 
 3. **Security Workflow** (`.github/workflows/security.yml`)
+
    - Runs Brakeman for security vulnerability scanning
    - Performs Bundle Audit for gem vulnerabilities
    - Scheduled weekly security scans
@@ -119,6 +129,7 @@ This project uses GitHub Actions for continuous integration and deployment. The 
 ### Quality Gates
 
 The CI pipeline will fail if:
+
 - Any RSpec tests fail
 - RuboCop style violations are found
 - Changed files have less than 70% test coverage
@@ -155,17 +166,20 @@ bundle exec bundle audit
 ### Quick Setup
 
 1. **Clone the repository:**
+
 ```bash
 git clone <repository-url>
 cd social-app-for-fixd
 ```
 
 2. **Install dependencies:**
+
 ```bash
 bundle install
 ```
 
 3. **Set up environment:**
+
 ```bash
 # Use the automated setup script
 ./setup_env.sh
@@ -176,6 +190,7 @@ cp environment.template .env
 ```
 
 4. **Start required services:**
+
 ```bash
 # PostgreSQL (macOS with Homebrew)
 brew services start postgresql
@@ -185,6 +200,7 @@ brew services start redis
 ```
 
 5. **Set up the database:**
+
 ```bash
 rails db:create
 rails db:migrate
@@ -192,6 +208,7 @@ rails db:seed
 ```
 
 6. **Start the application:**
+
 ```bash
 # Start the Rails server
 rails server
@@ -217,28 +234,33 @@ See `environment.template` for all available configuration options.
 ## High-Concurrency Features
 
 ### Optimistic Locking
+
 - Prevents data corruption from concurrent post edits
 - Returns 409 Conflict when concurrent modifications are detected
 - Automatic retry handling with user-friendly error messages
 
 ### Distributed Locks
+
 - Redis-based locking for rating operations
 - Prevents race conditions in multi-user scenarios
 - Graceful degradation when Redis is unavailable
 
 ### Background Job Processing
+
 - **View Count Updates**: Asynchronous to avoid blocking requests
 - **Notification Delivery**: Real-time notifications when posts are rated
 - **Timeline Cache Warming**: Automatic cache management
 - **Periodic Maintenance**: Automated cache warming for active users
 
 ### Monitoring & Performance
+
 - **Sidekiq Web UI**: Monitor background jobs at `http://localhost:3000/sidekiq`
 - **Database Connection Pool Monitoring**: Built-in health checks
 - **Performance Tracking**: Slow query and request monitoring
 - **Redis Health Checks**: Automatic connection monitoring
 
 ### Production Considerations
+
 - Configure Redis clustering for high availability
 - Set up Sidekiq monitoring and alerting
 - Monitor database connection pool utilization
@@ -248,19 +270,36 @@ See `environment.template` for all available configuration options.
 ## API Endpoints
 
 ### Authentication
+
 - `POST /api/v1/auth/register` - Register a new user
 - `POST /api/v1/auth/sign_in` - Sign in user and get JWT token
 - `DELETE /api/v1/auth/sign_out` - Sign out user
 - `GET /api/v1/auth/me` - Get current user info
 
 ### Timeline
+
 - `GET /api/v1/timeline` - Get activity timeline of recent posts from all users
   - Supports pagination (`page`, `per_page`)
   - Supports filtering by minimum average rating (`min_rating`)
   - Sorted by creation time (newest first)
   - Includes post author information, average rating, and rating count
 
+### Search
+
+- `GET /api/v1/search` - Full-text search for posts
+  - Query params:
+    - q (string, required): Search query string
+    - page (integer, optional, default: 1)
+    - per_page (integer, optional, default: 20, max: 100)
+    - min_rating (float, optional): Filter posts by minimum average rating
+  - Results:
+    - Returns posts matching the query with relevance ranking (ts_rank)
+    - Includes post metadata (title, body, created_at, view_count, avg_rating, ratings_count)
+    - Includes author information
+    - Includes pagination metadata (total_count, total_pages, current page, per_page)
+
 ### Posts
+
 - `GET /api/v1/posts` - List all posts (paginated)
 - `POST /api/v1/posts` - Create a new post
 - `GET /api/v1/posts/:id` - Get a specific post
@@ -268,6 +307,7 @@ See `environment.template` for all available configuration options.
 - `DELETE /api/v1/posts/:id` - Soft delete a post
 
 ### Ratings
+
 - `GET /api/v1/posts/:post_id/rating` - Get user's rating for a post
 - `POST /api/v1/posts/:post_id/rating` - Create a rating for a post
 - `PATCH /api/v1/posts/:post_id/rating` - Update user's rating for a post
@@ -276,13 +316,16 @@ See `environment.template` for all available configuration options.
 ## API Documentation
 
 ### Interactive Documentation
+
 Visit `http://localhost:3000/api-docs/` for the Swagger UI interface where you can:
+
 - Browse all available endpoints
 - View request/response schemas
 - Test API endpoints directly from the browser
 - View example requests and responses
 
 ### OpenAPI Specification
+
 Direct access to the OpenAPI spec: `http://localhost:3000/api-docs/swagger.yaml`
 
 ## Authentication
@@ -297,6 +340,7 @@ Real JWT tokens are generated upon successful login/registration and contain use
 Tokens expire after 24 hours and must be included in the Authorization header.
 
 To get a token, first register or sign in:
+
 ```bash
 # Register a new user
 curl -X POST http://localhost:3000/api/v1/auth/register \
@@ -314,6 +358,7 @@ Both endpoints will return a JWT token in the response that you can use for subs
 ## Testing
 
 ### Running Tests
+
 ```bash
 # Run all tests
 bundle exec rspec
@@ -327,6 +372,7 @@ bundle exec rspec --format documentation
 ```
 
 ### Test Coverage
+
 - **Rating Model**: Validations, associations, callbacks, statistics updates
 - **Rating Controller**: Full CRUD operations with authentication/authorization
 - **Post Model**: Associations, validations, rating integration
@@ -335,6 +381,7 @@ bundle exec rspec --format documentation
 - **Error Handling**: Comprehensive 401, 403, 404, 422 response testing
 
 ### Test Results
+
 - **314+ examples, 0 failures**
 - Comprehensive coverage of happy paths and edge cases
 - Proper error handling and validation testing
@@ -344,6 +391,7 @@ bundle exec rspec --format documentation
 ## Database Schema
 
 ### Users
+
 - `id` (Primary Key)
 - `email` (Unique)
 - `username` (Unique)
@@ -351,6 +399,7 @@ bundle exec rspec --format documentation
 - `created_at`, `updated_at`
 
 ### Posts
+
 - `id` (Primary Key)
 - `user_id` (Foreign Key)
 - `title` (String, max 100 chars)
@@ -365,6 +414,7 @@ bundle exec rspec --format documentation
 - `created_at`, `updated_at`
 
 ### Ratings
+
 - `id` (Primary Key)
 - `user_id` (Foreign Key)
 - `post_id` (Foreign Key)
@@ -372,15 +422,35 @@ bundle exec rspec --format documentation
 - `created_at`, `updated_at`
 - Unique constraint on `user_id` and `post_id`
 
+### JWT Denylists
+
+- `id` (Primary Key)
+- `jti` (String, not null, unique)
+- `exp` (Datetime, not null)
+- `created_at`, `updated_at`
+
+### Timeline Materialized View (`timeline_mv`)
+
+- `post_id`
+- `user_id`
+- `title`
+- `body`
+- `created_at`
+- `view_count`
+- `avg_rating`
+- `ratings_count`
+
 ## Development
 
 ### Code Quality
+
 - RuboCop for code style enforcement
 - RSpec for testing
 - FactoryBot for test data
 - Shoulda-matchers for model testing
 
 ### Key Features Implementation
+
 - **Soft Deletion**: Posts use `deleted_at` timestamp instead of permanent deletion
 - **Cached Statistics**: Post ratings are cached for performance
 - **Real-time Updates**: Rating changes automatically update post statistics
@@ -392,12 +462,14 @@ bundle exec rspec --format documentation
 - **Connection Pooling**: Optimized database connections for high concurrency
 
 ### Development Tools
+
 - **Sidekiq Web UI**: `http://localhost:3000/sidekiq` (admin/password)
 - **API Documentation**: `http://localhost:3000/api-docs/`
 - **Performance Monitoring**: Built-in slow query and request tracking
 - **Database Pool Monitoring**: Automatic connection health checks
 
 ### Running Background Jobs
+
 ```bash
 # Start Sidekiq for background job processing
 bundle exec sidekiq

@@ -1,24 +1,11 @@
-# Sidekiq configuration
-# This file configures Sidekiq queues and concurrency
+# config/sidekiq.yml
+# Pure YAML (ERB is ok). No Ruby here.
+concurrency: <%= Integer(ENV.fetch("SIDEKIQ_CONCURRENCY", 5)) %>
+timeout: 30
 
-# Default queue configuration
-# You can customize this based on your needs
-sidekiq_config = {
-  queues: %w[default notifications view_counts timeline_cache],
-  concurrency: ENV.fetch("SIDEKIQ_CONCURRENCY", 5).to_i,
-  timeout: 30,
-  retry: 3
-}
-
-# Configure Sidekiq with the settings
-Sidekiq.configure_server do |config|
-  config.redis = { url: Rails.application.config.redis_url }
-  config.concurrency = sidekiq_config[:concurrency]
-  config.timeout = sidekiq_config[:timeout]
-  config.retry = sidekiq_config[:retry]
-end
-
-Sidekiq.configure_client do |config|
-  config.redis = { url: Rails.application.config.redis_url }
-end
-
+# Weighted queues (higher number = higher priority)
+queues:
+  - [default, 5]
+  - [notifications, 3]
+  - [view_counts, 2]
+  - [timeline_cache, 1]

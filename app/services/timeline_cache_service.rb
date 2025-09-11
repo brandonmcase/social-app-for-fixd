@@ -2,6 +2,10 @@ class TimelineCacheService
   CACHE_EXPIRY = 5.minutes
   CACHE_KEY_PREFIX = "timeline"
 
+  def base_scope
+    TimelineEntry.all
+  end
+
   def self.fetch_timeline(page: 1, per_page: 20, min_rating: nil)
     cache_key = build_cache_key(page, per_page, min_rating)
 
