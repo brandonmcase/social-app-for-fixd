@@ -540,6 +540,22 @@ paths:
             minimum: 1
             maximum: 100
             default: 20
+        - name: language
+          in: query
+          schema: { type: string }
+          description: "Filter by metadata.lang (e.g., 'en')"
+        - name: tag
+          in: query
+          schema: { type: string }
+          description: "Filter by presence of a tag in metadata.tags[]"
+        - name: featured
+          in: query
+          schema: { type: boolean }
+          description: "Filter posts where metadata.featured = true"
+        - name: min_score
+          in: query
+          schema: { type: number, format: float }
+          description: "Filter posts with metadata.score >= min_score"
       responses:
         "200":
           description: Posts retrieved successfully
@@ -634,6 +650,10 @@ paths:
                       maxLength: 1000
                       example: "This is the content of my post. It can be quite long and detailed."
                       description: Post content
+                    metadata:
+                      type: object
+                      description: "Arbitrary post metadata (JSONB). Common keys: lang, tags[], flags{featured}, score"
+                      additionalProperties: true
                   required:
                     - title
                     - body

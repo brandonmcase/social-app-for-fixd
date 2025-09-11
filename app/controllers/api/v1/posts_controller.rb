@@ -7,6 +7,7 @@ module Api
       # GET /api/v1/posts
       def index
         posts = Post.active
+                    .filters(params)
                     .includes(:user)
                     .order(created_at: :desc)
                     .page(params[:page])
@@ -14,7 +15,7 @@ module Api
 
         render json: posts.as_json(
           only: [ :id, :title, :body, :view_count, :average_rating, :rating_count, :created_at ],
-          methods: [ :username ]
+          methods: [ :username, :metadata ]
         )
       end
 
@@ -89,7 +90,7 @@ module Api
       end
 
       def post_params
-        params.require(:post).permit(:title, :body)
+        params.require(:post).permit(:title, :body, metadata: {})
       end
     end
   end
