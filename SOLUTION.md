@@ -268,6 +268,100 @@ bin/rails s
 
 ---
 
+## Extreme Concurrency Handling
+
+Optimistic locking: lock_version on posts prevents lost updates; StaleObjectError returns 409 Conflict with a friendly message to refresh and retry.
+
+Redis locks for ratings: A short-lived distributed lock on (post_id, user_id) serializes rating mutations to keep cached aggregates consistent under heavy write contention.
+
+Asynchronous work with Sidekiq: View count increments, “post rated” notifications, and timeline cache warming run in background jobs to reduce request latency and avoid contention on hot rows.
+
+Connection pooling: Database pool sized to cover Puma and Sidekiq concurrency; timeouts tuned to fail fast under resource pressure.
+
+Trade-offs: Locks are bounded (ms TTL, jittered retries) to prevent thundering herds; optimistic locking shifts conflict resolution to clients, which is acceptable for API consumers and surfaces clear errors.
+
+---
+
+## Full-Text Search (PostgreSQL Built-ins)
+
+### Why PostgreSQL FTS?
+
+- **Zero extra infra** (no Elasticsearch/Solr), good performance, strong ranking.
+- **Index-backed** queries via `GIN` on a `tsvector` column.
+- **Rich query syntax** using `websearch_to_tsquery` (quotes, AND/OR, minus).
+
+### Implementation
+
+- **Schema:** Added `posts.search_vector :tsvector` + **GIN** index.
+- **Sync strategy:** Used a **trigger** to keep `search_vector` up to date, not a generated column, because `unaccent()` is **STABLE** (not IMMUTABLE) and can’t be used in generated expressions.
+
+  - Trigger function sets:
+
+    - `A` weight for `title`
+    - `B` weight for `body`
+    - Applies `unaccent()` for diacritic-insensitive search
+
+- **Model scopes:**
+
+  - `fts(q)` → `search_vector @@ websearch_to_tsquery('english', unaccent(q))`
+  - `ranked(q)` → selects `ts_rank_cd(...) AS rank` and orders by rank desc
+
+- **Controller pattern:** Thin controller calling `SearchService` (mirrors timeline), which:
+
+  - Filters to active posts
+  - Applies FTS + ranking
+  - Includes author to avoid N+1
+  - Paginates (Kaminari)
+  - Returns `{ data, meta }` shape
+  - **Caches** results per `(q, min_rating, page, per_page)` with short TTL
+
+### Example Query
+
+```
+GET /api/v1/search?q="hello world" OR greetings -farewell&page=1&per_page=20
+Authorization: Bearer <JWT>
+```
+
+### Performance
+
+- **Index:** `GIN (search_vector)` ensures fast `@@` lookups.
+- **Ranking:** `ts_rank_cd` balances term frequency and rarity; we tie-break with `created_at DESC`.
+- **Complexity:** \~O(log n) to hit the index + O(k) to return a page (k = page size).
+- **Caching:** Short TTL cache reduces repeated computation on popular queries.
+- **Indexes kept:** `posts(deleted_at)`, `posts(created_at)`, `posts(user_id)` for related endpoints.
+
+### Trade-offs & Alternatives
+
+- **Trigger vs Generated Column:** Trigger chosen to keep `unaccent()` (better UX). If diacritics aren’t needed, a **generated** column is simpler.
+- **Language:** Currently `'english'`; can be parameterized or stored per post if multi-lingual content is expected.
+- **Highlighting:** Could add `ts_headline` for result snippets (omitted for simplicity).
+
+### Testing
+
+- Validate:
+
+  - Exact phrase (`"hello world"`)
+  - Boolean operators (OR, minus)
+  - Pagination metadata
+  - `min_rating` filter interaction
+  - Soft-deleted posts excluded
+
+- Smoke test with curl:
+
+  ```bash
+  curl -i "http://localhost:3000/api/v1/search?q=hello&page=1&per_page=5" \
+    -H "Authorization: Bearer <JWT>"
+  ```
+
+### Future Enhancements
+
+- Query spell-correction / synonyms (dictionary tweaks).
+- Multi-language support (per-row dictionaries or per-query).
+- Result highlighting via `ts_headline`.
+- Popular-query caching with longer TTL + invalidation on writes.
+
+---
+
 ## Use of AI in the Development Process
 
 ### Planning and Task Breakdown

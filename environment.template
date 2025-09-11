@@ -36,3 +36,4 @@ RACK_ATTACK_ENABLED=true
 # Optional: Sidekiq Web UI (Development)
 SIDEKIQ_WEB_USERNAME=admin
 SIDEKIQ_WEB_PASSWORD=password
+

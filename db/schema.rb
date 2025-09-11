@@ -10,9 +10,10 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_09_11_001259) do
+ActiveRecord::Schema[8.0].define(version: 2025_09_11_010513) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+  enable_extension "unaccent"
 
   create_table "jwt_denylists", force: :cascade do |t|
     t.string "jti", null: false
@@ -35,6 +36,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_11_001259) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "lock_version", default: 0, null: false
+    t.tsvector "search_vector"
     t.index "((metadata ->> 'category'::text))", name: "index_posts_on_metadata_category"
     t.index "((metadata ->> 'language'::text))", name: "index_posts_on_metadata_language"
     t.index "((metadata ->> 'source'::text))", name: "index_posts_on_metadata_source"
@@ -43,6 +45,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_11_001259) do
     t.index ["created_at"], name: "index_posts_on_created_at_desc"
     t.index ["deleted_at", "created_at"], name: "index_posts_on_deleted_at_and_created_at"
     t.index ["metadata"], name: "index_posts_on_featured_metadata", where: "(metadata ? 'featured'::text)", using: :gin
+    t.index ["search_vector"], name: "index_posts_on_search_vector", using: :gin
     t.index ["user_id", "created_at"], name: "index_posts_on_user_id_and_created_at"
     t.index ["user_id"], name: "index_posts_on_user_id"
   end

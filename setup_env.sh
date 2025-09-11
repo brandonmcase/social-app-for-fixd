@@ -44,3 +44,4 @@ echo "  bundle exec sidekiq"
 echo ""
 echo "For Sidekiq Web UI:"
 echo "  Visit http://localhost:3000/sidekiq (admin/password)"
+

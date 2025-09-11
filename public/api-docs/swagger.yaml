@@ -3,7 +3,7 @@ info:
   title: Social App for Fixd API
   description: |
     API documentation for the Social App for Fixd.
-    
+
     This API provides endpoints for user registration, authentication, user management, post management, and rating management.
     All endpoints return JSON responses and use JWT tokens for authentication.
   version: 1.0.0
@@ -47,7 +47,7 @@ paths:
                       type: string
                       minLength: 1
                       maxLength: 50
-                      pattern: '^[a-zA-Z0-9_]+$'
+                      pattern: "^[a-zA-Z0-9_]+$"
                       example: username
                       description: Unique username (alphanumeric and underscores only)
                     password:
@@ -77,7 +77,7 @@ paths:
                     password: password123
                     password_confirmation: password123
       responses:
-        '201':
+        "201":
           description: User created successfully
           content:
             application/json:
@@ -107,7 +107,7 @@ paths:
                       id: 1
                       email: newuser@example.com
                       username: newuser
-        '422':
+        "422":
           description: Validation errors
           content:
             application/json:
@@ -138,7 +138,11 @@ paths:
                       message: Invalid registration
                       details:
                         email: ["can't be blank", "is invalid"]
-                        username: ["can't be blank", "is too short (minimum is 1 character)"]
+                        username:
+                          [
+                            "can't be blank",
+                            "is too short (minimum is 1 character)",
+                          ]
                         password: ["is too short (minimum is 8 characters)"]
 
   /api/v1/auth/sign_in:
@@ -178,7 +182,7 @@ paths:
                     email: user@example.com
                     password: password123
       responses:
-        '200':
+        "200":
           description: User signed in successfully
           content:
             application/json:
@@ -213,7 +217,7 @@ paths:
                       email: user@example.com
                       username: username
                     token: jwt_token_placeholder_1
-        '401':
+        "401":
           description: Invalid credentials
           content:
             application/json:
@@ -245,7 +249,7 @@ paths:
       description: Signs out the current user (token becomes invalid)
       operationId: signOutUser
       responses:
-        '204':
+        "204":
           description: User signed out successfully
           content:
             application/json:
@@ -263,7 +267,7 @@ paths:
       security:
         - BearerAuth: []
       responses:
-        '200':
+        "200":
           description: User information retrieved successfully
           content:
             application/json:
@@ -293,7 +297,7 @@ paths:
                       id: 1
                       email: user@example.com
                       username: username
-        '401':
+        "401":
           description: Unauthorized - invalid or missing token
           content:
             application/json:
@@ -357,7 +361,7 @@ paths:
             maximum: 5.0
             example: 4.0
       responses:
-        '200':
+        "200":
           description: Timeline retrieved successfully
           content:
             application/json:
@@ -400,7 +404,7 @@ paths:
                         username:
                           type: string
                           example: "john_doe"
-        '401':
+        "401":
           description: Unauthorized - invalid or missing token
           content:
             application/json:
@@ -416,6 +420,98 @@ paths:
                       message:
                         type: string
                         example: Invalid or missing token
+
+  /api/v1/search:
+    get:
+      tags:
+        - Search
+      summary: Full-text search on posts
+      description: |
+        Searches active posts (soft-deleted excluded) using PostgreSQL full-text
+        search with weighted ranking. Results are paginated and optionally
+        filterable by minimum average rating.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: q
+          required: true
+          schema:
+            type: string
+          description: Search query. Supports quotes, AND/OR, and minus using `websearch_to_tsquery`.
+          example: '"hello world" OR greetings -farewell'
+        - in: query
+          name: page
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - in: query
+          name: per_page
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - in: query
+          name: min_rating
+          required: false
+          schema:
+            type: number
+            format: float
+            minimum: 0
+            maximum: 5
+          description: Filter out posts with avg_rating below this value.
+          example: 4
+      responses:
+        "200":
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SearchResponse"
+              examples:
+                sample:
+                  value:
+                    data:
+                      - id: 42
+                        title: "Hello world"
+                        body: "This is my first post"
+                        created_at: "2025-09-10T15:30:00Z"
+                        view_count: 12
+                        avg_rating: 4.5
+                        ratings_count: 3
+                        author:
+                          id: 20
+                          username: testuser1
+                        rank: 0.2345
+                    meta:
+                      q: "hello"
+                      page: 1
+                      per_page: 20
+                      total_pages: 1
+                      total_count: 1
+                      min_rating: null
+        "400":
+          description: Missing or invalid query
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                missing_query:
+                  value:
+                    error:
+                      code: bad_request
+                      message: "Missing search query"
+        "401":
+          description: Unauthorized (missing/invalid token)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /api/v1/posts:
     get:
@@ -445,7 +541,7 @@ paths:
             maximum: 100
             default: 20
       responses:
-        '200':
+        "200":
           description: Posts retrieved successfully
           content:
             application/json:
@@ -491,7 +587,7 @@ paths:
                       average_rating: "3.5"
                       rating_count: 2
                       created_at: "2024-01-15T10:30:00Z"
-        '401':
+        "401":
           description: Unauthorized - invalid or missing token
           content:
             application/json:
@@ -549,7 +645,7 @@ paths:
                     title: "My Amazing Post"
                     body: "This is the content of my post. It can be quite long and detailed."
       responses:
-        '201':
+        "201":
           description: Post created successfully
           content:
             application/json:
@@ -611,7 +707,7 @@ paths:
                     rating_count: 0
                     created_at: "2024-01-15T10:30:00Z"
                     updated_at: "2024-01-15T10:30:00Z"
-        '401':
+        "401":
           description: Unauthorized - invalid or missing token
           content:
             application/json:
@@ -627,7 +723,7 @@ paths:
                       message:
                         type: string
                         example: Invalid or missing token
-        '422':
+        "422":
           description: Validation errors
           content:
             application/json:
@@ -662,7 +758,7 @@ paths:
             type: integer
             example: 1
       responses:
-        '200':
+        "200":
           description: Post retrieved successfully
           content:
             application/json:
@@ -706,7 +802,7 @@ paths:
                     average_rating: "3.5"
                     rating_count: 2
                     created_at: "2024-01-15T10:30:00Z"
-        '401':
+        "401":
           description: Unauthorized - invalid or missing token
           content:
             application/json:
@@ -722,7 +818,7 @@ paths:
                       message:
                         type: string
                         example: Invalid or missing token
-        '404':
+        "404":
           description: Post not found
           content:
             application/json:
@@ -792,7 +888,7 @@ paths:
                     title: "Updated Post Title"
                     body: "Updated post content with new information."
       responses:
-        '200':
+        "200":
           description: Post updated successfully
           content:
             application/json:
@@ -854,7 +950,7 @@ paths:
                     rating_count: 0
                     created_at: "2024-01-15T10:30:00Z"
                     updated_at: "2024-01-15T10:30:13Z"
-        '401':
+        "401":
           description: Unauthorized - invalid or missing token
           content:
             application/json:
@@ -870,7 +966,7 @@ paths:
                       message:
                         type: string
                         example: Invalid or missing token
-        '403':
+        "403":
           description: Forbidden - user can only update their own posts
           content:
             application/json:
@@ -893,7 +989,7 @@ paths:
                     error:
                       code: forbidden
                       message: You are not authorized to access this page.
-        '404':
+        "404":
           description: Post not found
           content:
             application/json:
@@ -909,7 +1005,7 @@ paths:
                       message:
                         type: string
                         example: Not found
-        '422':
+        "422":
           description: Validation errors
           content:
             application/json:
@@ -938,10 +1034,10 @@ paths:
             type: integer
             example: 1
       responses:
-        '204':
+        "204":
           description: Post deleted successfully
           content: {}
-        '401':
+        "401":
           description: Unauthorized - invalid or missing token
           content:
             application/json:
@@ -957,7 +1053,7 @@ paths:
                       message:
                         type: string
                         example: Invalid or missing token
-        '403':
+        "403":
           description: Forbidden - user can only delete their own posts
           content:
             application/json:
@@ -973,7 +1069,7 @@ paths:
                       message:
                         type: string
                         example: You are not authorized to access this page.
-        '404':
+        "404":
           description: Post not found
           content:
             application/json:
@@ -1008,7 +1104,7 @@ paths:
             type: integer
             example: 1
       responses:
-        '200':
+        "200":
           description: Rating retrieved successfully
           content:
             application/json:
@@ -1047,7 +1143,7 @@ paths:
                     rating: 4
                     created_at: "2024-01-15T10:30:00Z"
                     updated_at: "2024-01-15T10:30:00Z"
-        '401':
+        "401":
           description: Unauthorized - invalid or missing token
           content:
             application/json:
@@ -1063,7 +1159,7 @@ paths:
                       message:
                         type: string
                         example: Invalid or missing token
-        '404':
+        "404":
           description: No rating found for this user and post
           content:
             application/json:
@@ -1120,7 +1216,7 @@ paths:
                   rating:
                     rating: 4
       responses:
-        '201':
+        "201":
           description: Rating created successfully
           content:
             application/json:
@@ -1157,7 +1253,7 @@ paths:
                     rating: 4
                     created_at: "2024-01-15T10:30:00Z"
                     updated_at: "2024-01-15T10:30:00Z"
-        '401':
+        "401":
           description: Unauthorized - invalid or missing token
           content:
             application/json:
@@ -1173,7 +1269,7 @@ paths:
                       message:
                         type: string
                         example: Invalid or missing token
-        '404':
+        "404":
           description: Post not found
           content:
             application/json:
@@ -1189,7 +1285,7 @@ paths:
                       message:
                         type: string
                         example: Not found
-        '422':
+        "422":
           description: Validation errors
           content:
             application/json:
@@ -1245,7 +1341,7 @@ paths:
                   rating:
                     rating: 5
       responses:
-        '200':
+        "200":
           description: Rating updated successfully
           content:
             application/json:
@@ -1282,7 +1378,7 @@ paths:
                     rating: 5
                     created_at: "2024-01-15T10:30:00Z"
                     updated_at: "2024-01-15T10:35:00Z"
-        '401':
+        "401":
           description: Unauthorized - invalid or missing token
           content:
             application/json:
@@ -1298,7 +1394,7 @@ paths:
                       message:
                         type: string
                         example: Invalid or missing token
-        '404':
+        "404":
           description: Post not found or no rating exists for this user
           content:
             application/json:
@@ -1314,7 +1410,7 @@ paths:
                       message:
                         type: string
                         example: Not found
-        '422':
+        "422":
           description: Validation errors
           content:
             application/json:
@@ -1348,10 +1444,10 @@ paths:
             type: integer
             example: 1
       responses:
-        '204':
+        "204":
           description: Rating deleted successfully
           content: {}
-        '401':
+        "401":
           description: Unauthorized - invalid or missing token
           content:
             application/json:
@@ -1367,7 +1463,7 @@ paths:
                       message:
                         type: string
                         example: Invalid or missing token
-        '404':
+        "404":
           description: Post not found or no rating exists for this user
           content:
             application/json:
@@ -1392,10 +1488,10 @@ components:
       bearerFormat: JWT
       description: |
         JWT token for authentication. 
-        
+
         Real JWT tokens are generated upon successful login/registration and contain user information.
         Tokens expire after 24 hours and must be included in the Authorization header.
-        
+
         Example: `eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoxLCJlbWFpbCI6InRlc3RAZXhhbXBsZS5jb20iLCJ1c2VybmFtZSI6InRlc3R1c2VyIiwiZXhwIjoxNzM2NDQ4MDAwLCJpYXQiOjE3MzYzNjE2MDB9.example_signature`
 
   schemas:
@@ -1554,3 +1650,5 @@ tags:
     description: Post management endpoints for creating, reading, updating, and deleting posts
   - name: Ratings
     description: Rating management endpoints for creating, reading, updating, and deleting post ratings
+  - name: Search
+    description: Searches active posts (soft-deleted excluded) using PostgreSQL full-text

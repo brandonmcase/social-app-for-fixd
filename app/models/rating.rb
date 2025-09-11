@@ -7,6 +7,7 @@ class Rating < ApplicationRecord
 
   # When a rating changes, update cached stats atomically
   after_commit :refresh_post_caches, on: [ :create, :update, :destroy ]
+  after_commit :bust_search_cache, on: [ :create, :update, :destroy ]
 
   # Send notification when a new rating is created
   after_commit :send_notification, on: :create
@@ -39,5 +40,9 @@ class Rating < ApplicationRecord
   def send_notification
     # Queue notification delivery asynchronously
     NotificationDeliveryJob.perform_later(post_id, user_id, rating)
+  end
+
+  def bust_search_cache
+    Rails.cache.delete_matched("search:v1:*")
   end
 end
