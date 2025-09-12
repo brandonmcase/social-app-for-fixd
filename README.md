@@ -217,6 +217,14 @@ rails server
 bundle exec sidekiq
 ```
 
+7. **(Optional) Check that API endpoints are working**
+
+```bash
+# Quickly hit all API endpoints to verify rails server is functioning properly.
+# WARNING: This does create a User, Posts, and Ratings
+rake api:test
+```
+
 The API will be available at `http://localhost:3000`
 
 ### Environment Configuration
